@@ -1,97 +1,67 @@
-import React, { useState, useRef } from "react";
-import firebaseService from "../services/firebase";
+import React, { useState } from "react";
+import { User } from "firebase/auth";
+import { uploadProfilePicture } from "../services/firebase";
 
 interface ProfilePictureProps {
-  user: any; // Firebase User tipini kullanabilirsiniz
-  currentPhotoURL?: string;
-  onUploadSuccess?: (url: string) => void;
-  onUploadError?: (error: any) => void;
+  user: User;
+  photoURL: string | null;
+  onPhotoUpdate: (url: string) => void;
 }
 
 const ProfilePicture: React.FC<ProfilePictureProps> = ({
   user,
-  currentPhotoURL,
-  onUploadSuccess,
-  onUploadError,
+  photoURL,
+  onPhotoUpdate,
 }) => {
   const [uploading, setUploading] = useState(false);
-  const [previewUrl, setPreviewUrl] = useState<string | undefined>(
-    currentPhotoURL
-  );
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileSelect = async (
-    event: React.ChangeEvent<HTMLInputElement>
-  ) => {
-    const file = event.target.files?.[0];
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
-    // Dosya önizleme
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setPreviewUrl(reader.result as string);
-    };
-    reader.readAsDataURL(file);
-
-    // Dosya yükleme
     try {
       setUploading(true);
-      const downloadURL = await firebaseService.uploadProfilePicture(
-        user,
-        file
-      );
-      onUploadSuccess?.(downloadURL);
+      const downloadURL = await uploadProfilePicture(user, file);
+      onPhotoUpdate(downloadURL);
     } catch (error) {
       console.error("Profil resmi yüklenirken hata:", error);
-      onUploadError?.(error);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleClick = () => {
-    fileInputRef.current?.click();
-  };
-
   return (
-    <div className="flex flex-col items-center space-y-4">
-      <div
-        className="relative w-32 h-32 rounded-full overflow-hidden cursor-pointer group"
-        onClick={handleClick}
-      >
-        {/* Profil Resmi */}
-        {previewUrl ? (
+    <div className="relative group">
+      <div className="w-32 h-32 rounded-full overflow-hidden border-4 border-purple-500/30 group-hover:border-purple-500/50 transition-all duration-300">
+        {photoURL ? (
           <img
-            src={previewUrl}
+            src={photoURL}
             alt="Profil"
             className="w-full h-full object-cover"
           />
         ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-            <span className="text-4xl">👤</span>
-          </div>
-        )}
-
-        {/* Hover Efekti */}
-        <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-          <span className="text-white text-sm">Değiştir</span>
-        </div>
-
-        {/* Yükleme Göstergesi */}
-        {uploading && (
-          <div className="absolute inset-0 bg-black bg-opacity-75 flex items-center justify-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+          <div className="w-full h-full bg-purple-500/20 flex items-center justify-center text-4xl">
+            👤
           </div>
         )}
       </div>
-
-      {/* Gizli Dosya Input */}
+      <label
+        htmlFor="profile-picture"
+        className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity duration-300 rounded-full"
+      >
+        {uploading ? (
+          <span className="animate-pulse">Yükleniyor...</span>
+        ) : (
+          <span>Değiştir</span>
+        )}
+      </label>
       <input
-        ref={fileInputRef}
         type="file"
+        id="profile-picture"
         accept="image/*"
+        onChange={handleFileChange}
         className="hidden"
-        onChange={handleFileSelect}
+        disabled={uploading}
       />
     </div>
   );

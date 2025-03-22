@@ -1,123 +1,160 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { signIn } from "../services/firebase";
+import { auth } from "../services/firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-  });
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [showWelcome, setShowWelcome] = useState(false);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
-  };
+  useEffect(() => {
+    setShowWelcome(true);
+  }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signIn(formData.email, formData.password);
+      await signInWithEmailAndPassword(auth, email, password);
       navigate("/");
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      setError("Giriş yapılamadı. Lütfen bilgilerinizi kontrol edin.");
     }
   };
 
+  // Uzay elementleri için rastgele pozisyon oluşturan yardımcı fonksiyon
+  const randomPosition = () => {
+    return {
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      animationDelay: `${Math.random() * 5}s`,
+    };
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-100 via-purple-100 to-pink-100 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full mx-auto space-y-8 bg-white rounded-3xl shadow-xl p-8 transform hover:scale-105 transition-transform duration-300">
-        <div>
-          <div className="text-center mb-8">
-            <span className="text-6xl animate-bounce inline-block">🎪</span>
+    <div className="min-h-screen bg-gradient-to-b from-[#0B0B3B] via-[#1A1A5A] to-[#2E2E8A] relative overflow-hidden pt-16">
+      {/* Uzay Arka Plan Animasyonları */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Yıldızlar */}
+        {[...Array(50)].map((_, i) => (
+          <div
+            key={`star-${i}`}
+            className="absolute bg-white rounded-full animate-twinkle"
+            style={{
+              width: `${Math.random() * 3 + 1}px`,
+              height: `${Math.random() * 3 + 1}px`,
+              ...randomPosition(),
+            }}
+          />
+        ))}
+
+        {/* Kayan Yıldızlar */}
+        {[...Array(5)].map((_, i) => (
+          <div
+            key={`shooting-star-${i}`}
+            className="absolute w-1 h-1 bg-white rounded-full animate-shooting-star"
+            style={{
+              ...randomPosition(),
+              boxShadow: "0 0 10px #fff, 0 0 20px #fff",
+            }}
+          />
+        ))}
+
+        {/* Gezegenler ve Uzay Emojileri */}
+        {["🌍", "🌎", "🌏", "🌑", "🌕", "🌠", "☄️", "🚀"].map((emoji, i) => (
+          <div
+            key={`space-${i}`}
+            className="absolute text-4xl animate-float-slow"
+            style={randomPosition()}
+          >
+            {emoji}
           </div>
-          <h2 className="mt-2 text-center text-3xl font-extrabold bg-gradient-to-r from-purple-600 via-pink-500 to-red-500 text-transparent bg-clip-text">
-            Tekrar Hoş Geldin!
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Haydi maceraya devam edelim! ✨
-          </p>
-        </div>
+        ))}
+      </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {error && (
-            <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-md">
-              <div className="flex">
-                <div className="flex-shrink-0">
-                  <span className="text-xl">⚠️</span>
-                </div>
-                <div className="ml-3">
-                  <p className="text-sm text-red-700">{error}</p>
-                </div>
-              </div>
+      {/* Giriş Formu */}
+      <div className="container mx-auto px-4 py-12 relative z-10">
+        <div
+          className={`max-w-md mx-auto transform transition-all duration-1000 ${
+            showWelcome
+              ? "translate-y-0 opacity-100"
+              : "translate-y-10 opacity-0"
+          }`}
+        >
+          <div className="text-center mb-8">
+            <div className="text-7xl mb-4 animate-float-slow inline-block">
+              🚀
             </div>
-          )}
+            <h1 className="text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-300 to-pink-300 animate-pulse">
+              Hayal Dünyası Uzay Merkezi
+            </h1>
+            <p className="text-gray-300">
+              Yıldızlar arasında hayallerine yolculuk et! ✨
+            </p>
+          </div>
 
-          <div className="rounded-md shadow-sm space-y-4">
-            <div>
+          <form
+            onSubmit={handleLogin}
+            className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-xl border border-blue-500/20"
+          >
+            {error && (
+              <div className="mb-4 p-3 rounded-lg bg-red-500/20 text-red-200 text-center">
+                {error}
+              </div>
+            )}
+            <div className="mb-6">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-blue-300 mb-2 text-lg"
               >
-                Email Adresin 📧
+                Hayal Kaptanı E-postası
               </label>
               <input
-                id="email"
-                name="email"
                 type="email"
+                id="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="w-full bg-white/5 border border-blue-500/20 rounded-xl px-4 py-3 text-white placeholder-blue-200/50 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300"
+                placeholder="kaptan@hayaldunyasi.com"
                 required
-                className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
-                placeholder="senin@email.com"
-                value={formData.email}
-                onChange={handleChange}
               />
             </div>
-            <div>
+            <div className="mb-6">
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-gray-700 mb-1"
+                className="block text-blue-300 mb-2 text-lg"
               >
-                Gizli Şifren 🔑
+                Hayal Şifresi
               </label>
               <input
-                id="password"
-                name="password"
                 type="password"
-                required
-                className="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 focus:z-10 sm:text-sm"
+                id="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className="w-full bg-white/5 border border-blue-500/20 rounded-xl px-4 py-3 text-white placeholder-blue-200/50 focus:outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/20 transition-all duration-300"
                 placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
+                required
               />
             </div>
-          </div>
-
-          <div>
             <button
               type="submit"
-              className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-xl text-white bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 transform hover:scale-105 transition-all duration-200"
+              className="w-full bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xl py-3 rounded-xl shadow-lg hover:shadow-[0_0_30px_rgba(147,51,234,0.5)] transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 group"
             >
-              <span className="absolute left-0 inset-y-0 flex items-center pl-3">
-                <span className="text-xl">🚀</span>
-              </span>
-              Maceraya Başla!
+              <span className="group-hover:animate-bounce">🌠</span>
+              <span>Hayal Dünyasına Giriş</span>
             </button>
-          </div>
-        </form>
+          </form>
 
-        <div className="text-center">
-          <p className="text-sm text-gray-600">
-            Henüz hesabın yok mu?{" "}
+          <div className="mt-6 text-center">
             <button
               onClick={() => navigate("/register")}
-              className="font-medium text-purple-600 hover:text-purple-500 hover:underline"
+              className="text-blue-300 hover:text-blue-200 transition-colors duration-300"
             >
-              Hemen Kayıt Ol! 🌟
+              Henüz hayal dünyasına katılmadın mı? Hemen aramıza katıl! 🚀
             </button>
-          </p>
+          </div>
         </div>
       </div>
     </div>

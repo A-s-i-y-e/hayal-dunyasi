@@ -1,46 +1,34 @@
 # Hayal Dünyası Projesi
 
-Bu proje, React ve TypeScript kullanılarak geliştirilmiş bir web uygulamasıdır.
+Çocuklar için eğlenceli ve güvenli bir dijital platform. Çizim yapma, hikaye oluşturma ve eğitici oyunlar ile çocukların yaratıcılığını destekleyen bir web uygulaması.
 
 ## 🚀 Özellikler
 
-- React 18 ve TypeScript ile modern web geliştirme
-- Firebase entegrasyonu (Authentication, Realtime Database, Storage)
-- Local Storage desteği
-- Responsive tasarım
-- Modern UI/UX
+- Uzay temalı modern arayüz tasarımı
+- Güvenli kullanıcı kimlik doğrulama sistemi
+- Çizim yapma ve kaydetme
+- Hikaye oluşturma ve paylaşma
+- Ebeveyn kontrol paneli
 - Gerçek zamanlı veri senkronizasyonu
-- Güvenli kimlik doğrulama
+- Responsive tasarım
 
 ## 🛠️ Teknolojiler
 
-### Frontend
-
-- React.js
+- React 18
 - TypeScript
+- Firebase
+  - Authentication
+  - Firestore Database
+  - Storage
+  - Analytics
 - Tailwind CSS
 - React Router
-- LocalForage
-
-### Backend (Firebase)
-
-- Firebase Authentication
-- Firebase Realtime Database
-- Firebase Storage
-- Firebase Cloud Functions
-- Firebase Analytics
-- Firebase Cloud Messaging
-
-### AI ve Veri İşleme
-
-- TensorFlow.js
-- Web Speech API
 
 ## 📋 Gereksinimler
 
 - Node.js (v14 veya üzeri)
-- Firebase CLI
 - npm veya yarn
+- Firebase hesabı
 
 ## 🔧 Kurulum
 
@@ -62,31 +50,25 @@ cd hayal-dunyasi
 npm install
 ```
 
-4. Firebase CLI'ı yükleyin:
-
-```bash
-npm install -g firebase-tools
-```
-
-5. Firebase'e giriş yapın:
-
-```bash
-firebase login
-```
-
-6. Firebase projesini başlatın:
-
-```bash
-firebase init
-```
-
-7. `.env` dosyasını oluşturun:
+4. `.env` dosyasını oluşturun:
 
 ```bash
 cp .env.example .env
 ```
 
-8. Uygulamayı başlatın:
+5. `.env` dosyasını Firebase yapılandırma bilgilerinizle güncelleyin:
+
+```
+REACT_APP_FIREBASE_API_KEY=your_api_key
+REACT_APP_FIREBASE_AUTH_DOMAIN=your_auth_domain
+REACT_APP_FIREBASE_PROJECT_ID=your_project_id
+REACT_APP_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+REACT_APP_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+REACT_APP_FIREBASE_APP_ID=your_app_id
+REACT_APP_FIREBASE_MEASUREMENT_ID=your_measurement_id
+```
+
+6. Uygulamayı başlatın:
 
 ```bash
 npm start
@@ -94,7 +76,7 @@ npm start
 
 ## 🌐 Erişim
 
-Uygulama varsayılan olarak http://localhost:3000 adresinde çalışır.
+Uygulama varsayılan olarak `http://localhost:3000` adresinde çalışır.
 
 ## 📝 Proje Yapısı
 
@@ -102,46 +84,42 @@ Uygulama varsayılan olarak http://localhost:3000 adresinde çalışır.
 hayal-dunyasi/
 ├── src/
 │   ├── components/     # React bileşenleri
-│   ├── models/        # Veri modelleri
-│   ├── services/      # Firebase servisleri
-│   ├── types/         # TypeScript tip tanımlamaları
-│   └── utils/         # Yardımcı fonksiyonlar
-├── public/            # Statik dosyalar
-├── functions/         # Firebase Cloud Functions
-└── package.json       # Proje bağımlılıkları
+│   │   └── ProfilePicture.tsx  # Profil resmi yükleme bileşeni
+│   ├── pages/         # Sayfa bileşenleri
+│   │   ├── Home.tsx   # Ana sayfa
+│   │   ├── Login.tsx  # Giriş sayfası
+│   │   └── Register.tsx # Kayıt sayfası
+│   ├── services/      # Servis katmanı
+│   │   └── firebase.ts # Firebase servisleri
+│   └── styles/        # Stil dosyaları
+│       └── index.css  # Ana stil dosyası
+├── public/           # Statik dosyalar
+└── package.json      # Proje bağımlılıkları
 ```
 
 ## 🔒 Güvenlik
 
-- Firebase Authentication ile güvenli kimlik doğrulama
-- Firebase Security Rules ile veri güvenliği
 - Hassas bilgiler `.env` dosyasında saklanır
-- `.env` dosyası GitHub'a yüklenmez
-- Güvenlik önlemleri için `.env.example` dosyası örnek olarak sunulmuştur
+- Firebase Authentication ile güvenli kullanıcı yönetimi
+- Firestore kuralları ile veri güvenliği
+- Storage kuralları ile dosya güvenliği
 
-## 📅 Geliştirme Aşaması
+## 🎯 Tamamlanan Özellikler
 
-Proje şu anda geliştirme aşamasındadır. İlerleyen aşamalarda aşağıdaki özellikler eklenecektir:
+- ✅ Firebase Authentication entegrasyonu
+- ✅ Firestore Database entegrasyonu
+- ✅ Firebase Storage entegrasyonu
+- ✅ Profil resmi yükleme sistemi
+- ✅ Çizim ve hikaye görselleri için storage servisleri
+- ✅ Modern UI/UX tasarımı ve animasyonlar
 
-- [x] Firebase Authentication entegrasyonu
-- [x] Firebase Realtime Database entegrasyonu
-- [x] Firebase Storage entegrasyonu
-- [ ] AI modeli entegrasyonu
-- [ ] Test yazımı
-- [ ] CI/CD pipeline kurulumu
+## 📅 Gelecek Özellikler
 
-## 🔄 Veri Senkronizasyonu
-
-- Firebase Realtime Database ile gerçek zamanlı veri senkronizasyonu
-- Offline çalışma desteği
-- Otomatik veri yedekleme
-- Çoklu cihaz senkronizasyonu
-
-## 📊 Monitoring ve Analytics
-
-- Firebase Analytics ile kullanıcı davranışları analizi
-- Firebase Crashlytics ile hata takibi
-- Firebase Performance Monitoring ile performans analizi
+- 🔄 Çizim sistemi
+- 🔄 Hikaye oluşturma
+- 🔄 Ses kayıt sistemi
+- 🔄 Ebeveyn kontrol paneli
+- 🔄 Mobil uygulama
 
 ## 📄 Lisans
 
