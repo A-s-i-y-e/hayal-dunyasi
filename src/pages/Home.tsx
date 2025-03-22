@@ -1,53 +1,5 @@
-import React, { useEffect, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-
-const Star: React.FC<{ delay: number }> = ({ delay }) => {
-  const size = Math.random() * 3 + 1;
-  return (
-    <div
-      className="absolute bg-white rounded-full animate-twinkle"
-      style={{
-        width: `${size}px`,
-        height: `${size}px`,
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        animationDelay: `${delay}s`,
-      }}
-    />
-  );
-};
-
-const ShootingStar: React.FC<{ delay: number }> = ({ delay }) => {
-  return (
-    <div
-      className="absolute w-1 h-1 bg-white rounded-full animate-shooting-star"
-      style={{
-        top: `${Math.random() * 50}%`,
-        left: `${Math.random() * 100}%`,
-        animationDelay: `${delay}s`,
-        boxShadow: "0 0 10px #fff, 0 0 20px #fff",
-      }}
-    />
-  );
-};
-
-const Planet: React.FC<{ emoji: string; delay: number }> = ({
-  emoji,
-  delay,
-}) => {
-  return (
-    <div
-      className="absolute text-4xl animate-float-slow"
-      style={{
-        left: `${Math.random() * 100}%`,
-        top: `${Math.random() * 100}%`,
-        animationDelay: `${delay}s`,
-      }}
-    >
-      {emoji}
-    </div>
-  );
-};
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -57,26 +9,75 @@ const Home: React.FC = () => {
     setShowWelcome(true);
   }, []);
 
-  const planets = ["🌍", "🌎", "🌏", "🌑", "🌕", "🌠", "☄️", "🚀"];
-  const stars = Array.from({ length: 50 }, (_, i) => i);
-  const shootingStars = Array.from({ length: 5 }, (_, i) => i);
+  // Orman elementleri için rastgele pozisyon oluşturan yardımcı fonksiyon
+  const randomPosition = () => {
+    return {
+      left: `${Math.random() * 100}%`,
+      top: `${Math.random() * 100}%`,
+      animationDelay: `${Math.random() * 5}s`,
+    };
+  };
+
+  // Orman emojileri
+  const forestEmojis = [
+    "🌳",
+    "🌲",
+    "🌿",
+    "🍄",
+    "🦊",
+    "🦉",
+    "🦋",
+    "🐿️",
+    "🌸",
+    "🍃",
+  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0B0B3B] via-[#1A1A5A] to-[#2E2E8A] relative overflow-hidden">
-      {/* Yıldızlar */}
-      {stars.map((_, index) => (
-        <Star key={`star-${index}`} delay={index * 0.2} />
-      ))}
+    <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3c] to-[#3c6d4e] relative overflow-hidden pt-16">
+      {/* Arka plan animasyonları */}
+      <div className="absolute inset-0 overflow-hidden">
+        {/* Ağaçlar ve bitkiler */}
+        {forestEmojis.map((emoji, index) => (
+          <div
+            key={`forest-${index}`}
+            className="absolute text-4xl animate-float-slow"
+            style={{
+              ...randomPosition(),
+              fontSize: emoji === "🌳" || emoji === "🌲" ? "5rem" : "2rem",
+              zIndex: emoji === "🌳" || emoji === "🌲" ? 1 : 2,
+            }}
+          >
+            {emoji}
+          </div>
+        ))}
 
-      {/* Kayan Yıldızlar */}
-      {shootingStars.map((_, index) => (
-        <ShootingStar key={`shooting-${index}`} delay={index * 3} />
-      ))}
+        {/* Düşen yapraklar */}
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={`leaf-${i}`}
+            className="absolute text-lg animate-leaf-fall"
+            style={{
+              left: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 10}s`,
+              animationDuration: `${10 + Math.random() * 5}s`,
+            }}
+          >
+            🍂
+          </div>
+        ))}
 
-      {/* Gezegenler */}
-      {planets.map((planet, index) => (
-        <Planet key={`planet-${index}`} emoji={planet} delay={index * 2} />
-      ))}
+        {/* Ateş böcekleri */}
+        {[...Array(15)].map((_, i) => (
+          <div
+            key={`firefly-${i}`}
+            className="absolute w-2 h-2 rounded-full bg-yellow-300/50 animate-firefly"
+            style={{
+              ...randomPosition(),
+              boxShadow: "0 0 10px #ffd700, 0 0 20px #ffd700",
+            }}
+          />
+        ))}
+      </div>
 
       {/* Ana İçerik */}
       <div className="container mx-auto px-4 py-12 relative z-10">
@@ -89,14 +90,12 @@ const Home: React.FC = () => {
         >
           {/* Başlık Animasyonu */}
           <div className="mb-8 relative">
-            <div className="text-7xl mb-4 animate-float-slow inline-block">
-              🚀
-            </div>
-            <h1 className="text-5xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-purple-300 to-pink-300 animate-pulse">
-              Hayal Dünyasına Hoş Geldin!
+            <div className="text-7xl mb-4 animate-bounce inline-block">🌳</div>
+            <h1 className="text-5xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-green-300 via-yellow-200 to-green-300 animate-pulse">
+              Hayal Dünyası Büyülü Ormanı
             </h1>
-            <p className="text-2xl text-gray-200 mb-8 font-medium animate-fadeIn">
-              Uzayın derinliklerinde kendi hikayeni yaratmaya hazır mısın? ✨
+            <p className="text-2xl text-green-100 mb-8 font-medium">
+              Hayallerin büyülü ormanında maceraya hazır mısın? 🌿
             </p>
           </div>
 
@@ -104,55 +103,53 @@ const Home: React.FC = () => {
           <div className="space-y-4 md:space-y-0 md:space-x-6">
             <button
               onClick={() => navigate("/login")}
-              className="transform hover:scale-110 transition-transform duration-300 bg-gradient-to-r from-blue-500 to-purple-500 text-white text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-[0_0_30px_rgba(147,51,234,0.5)] flex items-center justify-center space-x-2 w-64 mx-auto md:inline-flex group"
+              className="transform hover:scale-110 transition-transform duration-300 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] flex items-center justify-center space-x-2 w-64 mx-auto md:inline-flex group"
             >
-              <span className="group-hover:animate-bounce">🚀</span>
-              <span>Maceraya Başla</span>
+              <span className="group-hover:animate-bounce">🌿</span>
+              <span>Hayallerine Başla</span>
             </button>
             <button
               onClick={() => navigate("/register")}
-              className="transform hover:scale-110 transition-transform duration-300 bg-gradient-to-r from-purple-500 to-pink-500 text-white text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-[0_0_30px_rgba(236,72,153,0.5)] flex items-center justify-center space-x-2 w-64 mx-auto md:inline-flex group"
+              className="transform hover:scale-110 transition-transform duration-300 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] flex items-center justify-center space-x-2 w-64 mx-auto md:inline-flex group"
             >
-              <span className="group-hover:animate-bounce">🌟</span>
-              <span>Yeni Kahraman Ol</span>
+              <span className="group-hover:animate-bounce">🌸</span>
+              <span>Hayal Dünyasına Katıl</span>
             </button>
           </div>
 
           {/* Özellik Kartları */}
           <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-xl transform hover:-translate-y-4 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] group">
+            <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-xl transform hover:-translate-y-4 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] border border-green-500/20 group">
               <div className="text-5xl mb-4 group-hover:animate-bounce">🎨</div>
-              <h3 className="text-2xl font-bold text-blue-300 mb-3">
-                Galakside Çiz
+              <h3 className="text-2xl font-bold text-green-300 mb-3">
+                Hayal Et ve Çiz
               </h3>
-              <p className="text-gray-300">
-                Uzayın derinliklerinde kendi karakterlerini tasarla!
+              <p className="text-green-100">
+                Hayallerini renkli çizimlerle hayata geçir!
               </p>
             </div>
-            <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-xl transform hover:-translate-y-4 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] group">
-              <div className="text-5xl mb-4 group-hover:animate-bounce">🌌</div>
-              <h3 className="text-2xl font-bold text-purple-300 mb-3">
-                Yıldızlarda Hikaye
+            <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-xl transform hover:-translate-y-4 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] border border-green-500/20 group">
+              <div className="text-5xl mb-4 group-hover:animate-bounce">📚</div>
+              <h3 className="text-2xl font-bold text-green-300 mb-3">
+                Hayal Hikayeleri
               </h3>
-              <p className="text-gray-300">
-                Her gezegen yeni bir macera, her yıldız yeni bir hikaye!
+              <p className="text-green-100">
+                Her hayal yeni bir hikaye, her düşünce yeni bir macera!
               </p>
             </div>
-            <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-xl transform hover:-translate-y-4 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] group">
+            <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-xl transform hover:-translate-y-4 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] border border-green-500/20 group">
               <div className="text-5xl mb-4 group-hover:animate-bounce">🎮</div>
-              <h3 className="text-2xl font-bold text-pink-300 mb-3">
-                Uzay Oyunları
+              <h3 className="text-2xl font-bold text-green-300 mb-3">
+                Hayal Oyunları
               </h3>
-              <p className="text-gray-300">
-                Galaksiler arası yolculukta eğlenceli oyunlar!
-              </p>
+              <p className="text-green-100">Hayallerini oyunlarla keşfet!</p>
             </div>
           </div>
 
           {/* Alt Bilgi */}
           <div className="mt-16 text-center">
-            <p className="text-gray-300 text-lg animate-pulse">
-              Güvenli bir uzay yolculuğu için ebeveyn kontrolü 🛸
+            <p className="text-green-200 text-lg animate-pulse">
+              Güvenli bir hayal yolculuğu için ebeveyn kontrolü 🌿
             </p>
           </div>
         </div>
