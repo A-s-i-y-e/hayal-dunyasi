@@ -3,10 +3,26 @@ import {
   getAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
-  signOut,
+  signOut as firebaseSignOut,
+  User,
 } from "firebase/auth";
-import { getFirestore, collection, doc, setDoc } from "firebase/firestore";
-import { getStorage } from "firebase/storage";
+import {
+  getFirestore,
+  collection,
+  doc,
+  setDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import {
+  getStorage,
+  ref,
+  uploadBytes,
+  getDownloadURL,
+  deleteObject,
+  listAll,
+} from "firebase/storage";
 import { getAnalytics } from "firebase/analytics";
 
 const firebaseConfig = {
@@ -31,8 +47,12 @@ export const analytics = getAnalytics(app);
 // Yardımcı fonksiyonlar
 export const signIn = async (email: string, password: string) => {
   try {
-    const response = await signInWithEmailAndPassword(auth, email, password);
-    return response.user;
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+    return userCredential.user;
   } catch (error) {
     throw error;
   }
@@ -41,22 +61,24 @@ export const signIn = async (email: string, password: string) => {
 export const signUp = async (
   email: string,
   password: string,
-  name: string,
-  userType: string
+  username: string
 ) => {
   try {
-    const response = await createUserWithEmailAndPassword(
+    const userCredential = await createUserWithEmailAndPassword(
       auth,
       email,
       password
     );
-    await setDoc(doc(collection(db, "users"), response.user.uid), {
-      name,
+    const user = userCredential.user;
+
+    // Kullanıcı bilgilerini Firestore'a kaydet
+    await setDoc(doc(db, "users", user.uid), {
+      username,
       email,
-      userType,
       createdAt: new Date().toISOString(),
     });
-    return response.user;
+
+    return user;
   } catch (error) {
     throw error;
   }
@@ -64,18 +86,89 @@ export const signUp = async (
 
 export const signOutUser = async () => {
   try {
-    await signOut(auth);
+    await firebaseSignOut(auth);
   } catch (error) {
     throw error;
   }
 };
 
-export default {
+// Storage işlemleri
+const uploadFile = async (file: File, path: string): Promise<string> => {
+  try {
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, file);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
+  } catch (error) {
+    throw error;
+  }
+};
+
+const deleteFile = async (path: string): Promise<void> => {
+  try {
+    const storageRef = ref(storage, path);
+    await deleteObject(storageRef);
+  } catch (error) {
+    throw error;
+  }
+};
+
+const listFiles = async (path: string): Promise<string[]> => {
+  try {
+    const storageRef = ref(storage, path);
+    const result = await listAll(storageRef);
+    const urls = await Promise.all(
+      result.items.map((item) => getDownloadURL(item))
+    );
+    return urls;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Profil resmi işlemleri
+const uploadProfilePicture = async (
+  user: User,
+  file: File
+): Promise<string> => {
+  const path = `users/${user.uid}/profile-picture`;
+  return uploadFile(file, path);
+};
+
+// Çizim işlemleri
+const uploadDrawing = async (
+  user: User,
+  file: File,
+  drawingName: string
+): Promise<string> => {
+  const path = `users/${user.uid}/drawings/${drawingName}`;
+  return uploadFile(file, path);
+};
+
+// Hikaye görselleri işlemleri
+const uploadStoryImage = async (
+  user: User,
+  file: File,
+  storyId: string
+): Promise<string> => {
+  const path = `users/${user.uid}/stories/${storyId}/images/${file.name}`;
+  return uploadFile(file, path);
+};
+
+const firebaseService = {
   auth,
   db,
   storage,
   analytics,
   signIn,
   signUp,
-  signOut: signOutUser,
+  signOutUser,
+  uploadFile,
+  deleteFile,
+  listFiles,
+  uploadProfilePicture,
+  uploadDrawing,
+  uploadStoryImage,
 };
+
+export default firebaseService;
