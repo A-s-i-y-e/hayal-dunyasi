@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../services/firebase";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { registerUser } from "../services/firebase";
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
   const [showWelcome, setShowWelcome] = useState(false);
 
@@ -22,10 +22,22 @@ const Register: React.FC = () => {
       return;
     }
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      await registerUser(email, password, displayName);
       navigate("/");
-    } catch (err) {
-      setError("Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.");
+    } catch (err: any) {
+      let errorMessage =
+        "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.";
+
+      // Firebase hata mesajlarını Türkçeleştirme
+      if (err.code === "auth/email-already-in-use") {
+        errorMessage = "Bu e-posta adresi zaten kullanımda.";
+      } else if (err.code === "auth/weak-password") {
+        errorMessage = "Şifre en az 6 karakter olmalıdır.";
+      } else if (err.code === "auth/invalid-email") {
+        errorMessage = "Geçersiz e-posta adresi.";
+      }
+
+      setError(errorMessage);
     }
   };
 
@@ -129,6 +141,23 @@ const Register: React.FC = () => {
                 {error}
               </div>
             )}
+            <div className="mb-6">
+              <label
+                htmlFor="displayName"
+                className="block text-cyan-300 mb-2 text-lg"
+              >
+                Denizci Adın
+              </label>
+              <input
+                type="text"
+                id="displayName"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="w-full bg-white/5 border border-cyan-500/20 rounded-xl px-4 py-3 text-white placeholder-cyan-200/50 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all duration-300"
+                placeholder="Kaptan Nemo"
+                required
+              />
+            </div>
             <div className="mb-6">
               <label
                 htmlFor="email"

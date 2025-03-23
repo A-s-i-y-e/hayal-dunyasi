@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../services/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { loginUser } from "../services/firebase";
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -17,10 +16,24 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await signInWithEmailAndPassword(auth, email, password);
+      await loginUser(email, password);
       navigate("/");
-    } catch (err) {
-      setError("Giriş yapılamadı. Lütfen bilgilerinizi kontrol edin.");
+    } catch (err: any) {
+      let errorMessage = "Giriş yapılamadı. Lütfen bilgilerinizi kontrol edin.";
+
+      // Firebase hata mesajlarını Türkçeleştirme
+      if (err.code === "auth/user-not-found") {
+        errorMessage = "Bu e-posta adresiyle kayıtlı bir kullanıcı bulunamadı.";
+      } else if (err.code === "auth/wrong-password") {
+        errorMessage = "Hatalı şifre girdiniz.";
+      } else if (err.code === "auth/invalid-email") {
+        errorMessage = "Geçersiz e-posta adresi.";
+      } else if (err.code === "auth/too-many-requests") {
+        errorMessage =
+          "Çok fazla başarısız giriş denemesi yaptınız. Lütfen daha sonra tekrar deneyin.";
+      }
+
+      setError(errorMessage);
     }
   };
 
