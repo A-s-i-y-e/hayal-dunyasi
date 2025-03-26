@@ -84,11 +84,15 @@ Uygulama varsayılan olarak `http://localhost:3000` adresinde çalışır.
 hayal-dunyasi/
 ├── src/
 │   ├── components/     # React bileşenleri
+│   │   ├── Navbar.tsx  # Navigasyon menüsü
 │   │   └── ProfilePicture.tsx  # Profil resmi yükleme bileşeni
 │   ├── pages/         # Sayfa bileşenleri
 │   │   ├── Home.tsx   # Ana sayfa
 │   │   ├── Login.tsx  # Giriş sayfası
-│   │   └── Register.tsx # Kayıt sayfası
+│   │   ├── Register.tsx # Kayıt sayfası
+│   │   ├── Library.tsx # Masal kütüphanesi
+│   │   ├── Profile.tsx # Profil sayfası
+│   │   └── DrawingWorkshop.tsx # Çizim atölyesi
 │   ├── services/      # Servis katmanı
 │   │   └── firebase.ts # Firebase servisleri
 │   └── styles/        # Stil dosyaları
@@ -104,22 +108,49 @@ hayal-dunyasi/
 - Firestore kuralları ile veri güvenliği
 - Storage kuralları ile dosya güvenliği
 
-## 🎯 Tamamlanan Özellikler
+## 📅 Proje İlerleme Durumu
 
-- ✅ Firebase Authentication entegrasyonu
-- ✅ Firestore Database entegrasyonu
-- ✅ Firebase Storage entegrasyonu
-- ✅ Profil resmi yükleme sistemi
-- ✅ Çizim ve hikaye görselleri için storage servisleri
-- ✅ Modern UI/UX tasarımı ve animasyonlar
+### ✅ Tamamlanan Haftalar (1-4)
 
-## 📅 Gelecek Özellikler
+1. Hafta: Proje Başlangıcı ve Planlama
 
-- 🔄 Çizim sistemi
-- 🔄 Hikaye oluşturma
-- 🔄 Ses kayıt sistemi
-- 🔄 Ebeveyn kontrol paneli
-- 🔄 Mobil uygulama
+   - Proje gereksinimleri analizi
+   - Temel dosya ve klasör yapısı oluşturuldu
+
+2. Hafta: Geliştirme Ortamı
+
+   - Gerekli araçların kurulumu (React, Tailwind CSS, Firebase)
+   - Basit web sayfası oluşturuldu
+
+3. Hafta: Veritabanı Kurulumu-Temel Sayfalar
+
+   - Firebase veritabanı ve depolama sistemi kurulumu
+   - Web sitesinin temel sayfaları oluşturuldu
+   - Navigasyon sistemi kuruldu
+
+4. Hafta: Kullanıcı Sistemi
+   - Kullanıcı kayıt/giriş sistemi
+   - Firebase Authentication entegrasyonu
+   - Kullanıcı profili yönetimi
+
+### 🔄 Devam Eden Haftalar (5)
+
+5. Hafta: Çizim Sistemi - Temel
+   - Temel çizim özellikleri eklendi
+   - Canvas entegrasyonu yapıldı
+   - Renk paleti ve temel araçlar eklendi
+
+### ⏳ Bekleyen Haftalar (6-14)
+
+6. Hafta: Çizim Sistemi - Gelişmiş
+7. Hafta: Hikaye Oluşturma - Temel
+8. Hafta: Hikaye Oluşturma - Gelişmiş
+9. Hafta: Ses Özellikleri
+10. Hafta: Yapay Zeka - Temel
+11. Hafta: Ebeveyn Paneli
+12. Hafta: Temel Testler
+13. Hafta: Optimizasyon
+14. Hafta: Son Kontroller ve Yayın
 
 ## 📄 Lisans
 

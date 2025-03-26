@@ -1,230 +1,182 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { registerUser } from "../services/firebase";
+import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
+import { auth } from "../services/firebase";
 
 const Register: React.FC = () => {
   const navigate = useNavigate();
+  const [displayName, setDisplayName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const [error, setError] = useState("");
-  const [showWelcome, setShowWelcome] = useState(false);
-
-  useEffect(() => {
-    setShowWelcome(true);
-  }, []);
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      setError("Şifreler eşleşmiyor!");
-      return;
-    }
+    setIsLoading(true);
+    setError("");
+
     try {
-      await registerUser(email, password, displayName);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      await updateProfile(userCredential.user, {
+        displayName: displayName,
+      });
       navigate("/");
-    } catch (err: any) {
-      let errorMessage =
-        "Kayıt oluşturulamadı. Lütfen bilgilerinizi kontrol edin.";
-
-      // Firebase hata mesajlarını Türkçeleştirme
-      if (err.code === "auth/email-already-in-use") {
-        errorMessage = "Bu e-posta adresi zaten kullanımda.";
-      } else if (err.code === "auth/weak-password") {
-        errorMessage = "Şifre en az 6 karakter olmalıdır.";
-      } else if (err.code === "auth/invalid-email") {
-        errorMessage = "Geçersiz e-posta adresi.";
-      }
-
-      setError(errorMessage);
+    } catch (error: any) {
+      setError(
+        error.code === "auth/email-already-in-use"
+          ? "Bu e-posta adresi zaten kullanımda."
+          : "Kayıt olurken bir hata oluştu."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
-
-  // Su altı elementleri için rastgele pozisyon oluşturan yardımcı fonksiyon
-  const randomPosition = () => {
-    return {
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-      animationDelay: `${Math.random() * 5}s`,
-    };
-  };
-
-  // Su altı emojileri
-  const underwaterEmojis = [
-    "🐠",
-    "🐟",
-    "🐡",
-    "🦈",
-    "🐋",
-    "🐳",
-    "🐢",
-    "🦀",
-    "🦑",
-    "🐙",
-  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#003366] via-[#004080] to-[#0066cc] relative overflow-hidden pt-16">
-      {/* Su Altı Arka Plan Animasyonları */}
+    <div className="min-h-screen bg-gradient-to-b from-emerald-800 via-green-900 to-teal-900 flex items-center justify-center px-4 relative overflow-hidden">
+      {/* Büyülü Arka Plan Efektleri */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* Baloncuklar */}
-        {[...Array(30)].map((_, i) => (
+        {/* Yıldızlar */}
+        {[...Array(50)].map((_, i) => (
           <div
-            key={`bubble-${i}`}
-            className="absolute rounded-full bg-white/20 animate-float-slow"
+            key={`star-${i}`}
+            className="absolute bg-emerald-200 rounded-full animate-twinkle"
             style={{
-              width: `${Math.random() * 20 + 10}px`,
-              height: `${Math.random() * 20 + 10}px`,
-              ...randomPosition(),
-              animationDuration: `${5 + Math.random() * 5}s`,
+              width: `${Math.random() * 3 + 1}px`,
+              height: `${Math.random() * 3 + 1}px`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 5}s`,
             }}
           />
         ))}
 
-        {/* Su Altı Canlıları */}
-        {underwaterEmojis.map((emoji, i) => (
+        {/* Sihirli Işık Efektleri */}
+        {[...Array(5)].map((_, i) => (
           <div
-            key={`creature-${i}`}
-            className="absolute text-4xl animate-swim"
+            key={`light-${i}`}
+            className="absolute bg-gradient-to-r from-emerald-500/20 via-green-500/20 to-teal-500/20 rounded-full animate-pulse-slow"
             style={{
-              ...randomPosition(),
-              transform: `scale(${0.5 + Math.random() * 1.5})`,
+              width: `${Math.random() * 300 + 100}px`,
+              height: `${Math.random() * 300 + 100}px`,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              filter: "blur(70px)",
+            }}
+          />
+        ))}
+
+        {/* Yapraklar ve Doğa Elementleri */}
+        {[...Array(20)].map((_, i) => (
+          <div
+            key={`nature-${i}`}
+            className="absolute text-2xl animate-float-slow"
+            style={{
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              animationDelay: `${Math.random() * 10}s`,
+              animationDuration: `${20 + Math.random() * 10}s`,
             }}
           >
-            {emoji}
+            {
+              ["🌿", "🍃", "🌱", "☘️", "🌸", "🍀"][
+                Math.floor(Math.random() * 6)
+              ]
+            }
           </div>
-        ))}
-
-        {/* Su Yansımaları */}
-        {[...Array(10)].map((_, i) => (
-          <div
-            key={`reflection-${i}`}
-            className="absolute bg-white/5 animate-sway"
-            style={{
-              width: "100px",
-              height: "2px",
-              ...randomPosition(),
-              transform: `rotate(${Math.random() * 360}deg)`,
-            }}
-          />
         ))}
       </div>
 
-      {/* Kayıt Formu */}
-      <div className="container mx-auto px-4 py-12 relative z-10">
-        <div
-          className={`max-w-md mx-auto transform transition-all duration-1000 ${
-            showWelcome
-              ? "translate-y-0 opacity-100"
-              : "translate-y-10 opacity-0"
-          }`}
-        >
-          <div className="text-center mb-8">
-            <div className="text-7xl mb-4 animate-float-slow inline-block">
-              🐋
-            </div>
-            <h1 className="text-4xl font-bold mb-4 text-transparent bg-clip-text bg-gradient-to-r from-cyan-300 via-blue-300 to-teal-300 animate-pulse">
-              Hayal Dünyası Su Altı Macerası
-            </h1>
-            <p className="text-cyan-100">
-              Hayallerin derinliklerinde yeni bir yolculuğa hazır mısın? 🌊
-            </p>
-          </div>
+      <div className="max-w-md w-full relative">
+        {/* Logo ve Başlık */}
+        <div className="text-center mb-8">
+          <div className="text-6xl mb-4 animate-bounce">🌳</div>
+          <h1 className="text-4xl font-bold mb-2 text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-green-300 to-teal-300">
+            Masal Dünyasına Katıl!
+          </h1>
+          <p className="text-emerald-200">
+            Kendi masallarını yaratmaya hazır mısın?
+          </p>
+        </div>
 
-          <form
-            onSubmit={handleRegister}
-            className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-xl border border-cyan-500/20"
-          >
+        {/* Kayıt Formu */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-3xl p-8 shadow-xl border border-emerald-500/20">
+          <form onSubmit={handleRegister} className="space-y-6">
             {error && (
-              <div className="mb-4 p-3 rounded-lg bg-red-500/20 text-red-200 text-center">
+              <div className="bg-red-500/20 backdrop-blur-sm text-red-200 p-4 rounded-2xl text-center">
                 {error}
               </div>
             )}
-            <div className="mb-6">
-              <label
-                htmlFor="displayName"
-                className="block text-cyan-300 mb-2 text-lg"
-              >
-                Denizci Adın
+
+            <div>
+              <label className="block text-emerald-200 mb-2 text-sm">
+                Masal Kahramanı Adın
               </label>
               <input
                 type="text"
-                id="displayName"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
-                className="w-full bg-white/5 border border-cyan-500/20 rounded-xl px-4 py-3 text-white placeholder-cyan-200/50 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all duration-300"
-                placeholder="Kaptan Nemo"
+                className="w-full bg-white/5 border border-emerald-500/20 rounded-xl px-4 py-3 text-white placeholder-emerald-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all duration-300"
+                placeholder="Örn: Hayal Gezgini"
                 required
               />
             </div>
-            <div className="mb-6">
-              <label
-                htmlFor="email"
-                className="block text-cyan-300 mb-2 text-lg"
-              >
-                Hayal Kaptanı E-postası
+
+            <div>
+              <label className="block text-emerald-200 mb-2 text-sm">
+                E-posta Adresin
               </label>
               <input
                 type="email"
-                id="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white/5 border border-cyan-500/20 rounded-xl px-4 py-3 text-white placeholder-cyan-200/50 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all duration-300"
-                placeholder="kaptan@hayaldunyasi.com"
+                className="w-full bg-white/5 border border-emerald-500/20 rounded-xl px-4 py-3 text-white placeholder-emerald-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all duration-300"
+                placeholder="ornek@email.com"
                 required
               />
             </div>
-            <div className="mb-6">
-              <label
-                htmlFor="password"
-                className="block text-cyan-300 mb-2 text-lg"
-              >
-                Hayal Şifresi
+
+            <div>
+              <label className="block text-emerald-200 mb-2 text-sm">
+                Sihirli Şifren
               </label>
               <input
                 type="password"
-                id="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white/5 border border-cyan-500/20 rounded-xl px-4 py-3 text-white placeholder-cyan-200/50 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all duration-300"
+                className="w-full bg-white/5 border border-emerald-500/20 rounded-xl px-4 py-3 text-white placeholder-emerald-300/50 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all duration-300"
                 placeholder="••••••••"
                 required
               />
             </div>
-            <div className="mb-6">
-              <label
-                htmlFor="confirmPassword"
-                className="block text-cyan-300 mb-2 text-lg"
-              >
-                Hayal Şifreni Tekrar Gir
-              </label>
-              <input
-                type="password"
-                id="confirmPassword"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-white/5 border border-cyan-500/20 rounded-xl px-4 py-3 text-white placeholder-cyan-200/50 focus:outline-none focus:border-cyan-400 focus:ring-2 focus:ring-cyan-400/20 transition-all duration-300"
-                placeholder="••••••••"
-                required
-              />
-            </div>
+
             <button
               type="submit"
-              className="w-full bg-gradient-to-r from-cyan-500 to-teal-500 text-white text-xl py-3 rounded-xl shadow-lg hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] transform hover:scale-105 transition-all duration-300 flex items-center justify-center space-x-2 group"
+              disabled={isLoading}
+              className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white rounded-xl py-4 font-semibold text-lg hover:shadow-lg hover:shadow-emerald-500/50 transition-all duration-300 relative overflow-hidden group"
             >
-              <span className="group-hover:animate-bounce">🐋</span>
-              <span>Hayal Dünyasına Katıl</span>
+              <span className="relative z-10">
+                {isLoading ? "Kayıt Yapılıyor..." : "Maceraya Katıl 🌱"}
+              </span>
+              <div className="absolute inset-0 bg-gradient-to-r from-teal-500 to-emerald-500 transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500 origin-left" />
             </button>
           </form>
 
           <div className="mt-6 text-center">
-            <button
-              onClick={() => navigate("/login")}
-              className="text-cyan-300 hover:text-cyan-200 transition-colors duration-300"
-            >
-              Zaten hayal dünyasının bir parçası mısın? Hemen giriş yap! 🌊
-            </button>
+            <p className="text-emerald-200">
+              Zaten bir hesabın var mı?{" "}
+              <button
+                onClick={() => navigate("/login")}
+                className="text-emerald-400 hover:text-emerald-300 font-semibold transition-colors duration-300"
+              >
+                Giriş Yap! 🌿
+              </button>
+            </p>
           </div>
         </div>
       </div>

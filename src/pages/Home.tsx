@@ -1,157 +1,107 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { useNavigate } from "react-router-dom";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
-  const [showWelcome, setShowWelcome] = useState(false);
 
-  useEffect(() => {
-    setShowWelcome(true);
-  }, []);
-
-  // Orman elementleri için rastgele pozisyon oluşturan yardımcı fonksiyon
-  const randomPosition = () => {
-    return {
-      left: `${Math.random() * 100}%`,
-      top: `${Math.random() * 100}%`,
-      animationDelay: `${Math.random() * 5}s`,
-    };
+  const handleCardClick = (path: string) => {
+    navigate(path);
   };
 
-  // Orman emojileri
-  const forestEmojis = [
-    "🌳",
-    "🌲",
-    "🌿",
-    "🍄",
-    "🦊",
-    "🦉",
-    "🦋",
-    "🐿️",
-    "🌸",
-    "🍃",
-  ];
-
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#1a472a] via-[#2d5a3c] to-[#3c6d4e] relative overflow-hidden pt-16">
-      {/* Arka plan animasyonları */}
+    <div className="min-h-screen bg-gradient-to-br from-purple-900 via-fuchsia-800 to-pink-800 relative overflow-hidden">
+      {/* Animasyonlu Arka Plan Elementleri */}
       <div className="absolute inset-0 overflow-hidden">
-        {/* Ağaçlar ve bitkiler */}
-        {forestEmojis.map((emoji, index) => (
-          <div
-            key={`forest-${index}`}
-            className="absolute text-4xl animate-float-slow"
-            style={{
-              ...randomPosition(),
-              fontSize: emoji === "🌳" || emoji === "🌲" ? "5rem" : "2rem",
-              zIndex: emoji === "🌳" || emoji === "🌲" ? 1 : 2,
-            }}
-          >
-            {emoji}
-          </div>
-        ))}
-
-        {/* Düşen yapraklar */}
         {[...Array(20)].map((_, i) => (
           <div
-            key={`leaf-${i}`}
-            className="absolute text-lg animate-leaf-fall"
+            key={i}
+            className="absolute animate-float-slow opacity-30"
             style={{
               left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
               animationDelay: `${Math.random() * 10}s`,
-              animationDuration: `${10 + Math.random() * 5}s`,
+              fontSize: `${Math.random() * 20 + 20}px`,
             }}
           >
-            🍂
+            {["✨", "🌟", "💫", "⭐", "🌙"][Math.floor(Math.random() * 5)]}
           </div>
-        ))}
-
-        {/* Ateş böcekleri */}
-        {[...Array(15)].map((_, i) => (
-          <div
-            key={`firefly-${i}`}
-            className="absolute w-2 h-2 rounded-full bg-yellow-300/50 animate-firefly"
-            style={{
-              ...randomPosition(),
-              boxShadow: "0 0 10px #ffd700, 0 0 20px #ffd700",
-            }}
-          />
         ))}
       </div>
 
-      {/* Ana İçerik */}
-      <div className="container mx-auto px-4 py-12 relative z-10">
-        <div
-          className={`text-center transform transition-all duration-1000 ${
-            showWelcome
-              ? "translate-y-0 opacity-100"
-              : "translate-y-10 opacity-0"
-          }`}
-        >
-          {/* Başlık Animasyonu */}
-          <div className="mb-8 relative">
-            <div className="text-7xl mb-4 animate-bounce inline-block">🌳</div>
-            <h1 className="text-5xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-green-300 via-yellow-200 to-green-300 animate-pulse">
-              Hayal Dünyası Büyülü Ormanı
-            </h1>
-            <p className="text-2xl text-green-100 mb-8 font-medium">
-              Hayallerin büyülü ormanında maceraya hazır mısın? 🌿
+      <div className="max-w-7xl mx-auto px-4 py-16 relative z-10">
+        {/* Ana Başlık */}
+        <div className="text-center mb-16 transform hover:scale-105 transition-transform duration-500">
+          <h1 className="text-6xl md:text-7xl font-bold mb-6 text-transparent bg-clip-text bg-gradient-to-r from-pink-300 via-purple-300 to-indigo-300 animate-gradient">
+            Hayal Dünyasına
+            <br />
+            Hoş Geldiniz
+          </h1>
+          <p className="text-xl md:text-2xl text-pink-200 max-w-3xl mx-auto leading-relaxed">
+            Masallar, çizimler ve kahramanlarla dolu büyülü bir yolculuğa
+            çıkmaya hazır mısınız? 🌟
+          </p>
+        </div>
+
+        {/* Kartlar */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mt-12">
+          {/* Çizim Atölyesi Kartı */}
+          <div
+            onClick={() => handleCardClick("/drawing-workshop")}
+            className="group relative bg-gradient-to-br from-cyan-500/20 to-blue-500/20 rounded-3xl p-8 backdrop-blur-xl border border-white/10 hover:border-white/20 transition-all duration-500 hover:shadow-2xl hover:shadow-cyan-500/20 cursor-pointer transform hover:-translate-y-2"
+          >
+            <div className="absolute -inset-1 bg-gradient-to-r from-cyan-400 to-blue-400 rounded-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+            <div className="text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-500">
+              🎨
+            </div>
+            <h3 className="text-2xl font-bold mb-4 text-cyan-300">
+              Masallar Çizim Atölyesi
+            </h3>
+            <p className="text-cyan-200 leading-relaxed">
+              Hayal gücünü renklerle buluştur ve kendi masalını resimle!
             </p>
           </div>
 
-          {/* Butonlar */}
-          <div className="space-y-4 md:space-y-0 md:space-x-6">
-            <button
-              onClick={() => navigate("/login")}
-              className="transform hover:scale-110 transition-transform duration-300 bg-gradient-to-r from-green-500 to-emerald-500 text-white text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] flex items-center justify-center space-x-2 w-64 mx-auto md:inline-flex group"
-            >
-              <span className="group-hover:animate-bounce">🌿</span>
-              <span>Hayallerine Başla</span>
-            </button>
-            <button
-              onClick={() => navigate("/register")}
-              className="transform hover:scale-110 transition-transform duration-300 bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-xl px-8 py-4 rounded-full shadow-lg hover:shadow-[0_0_30px_rgba(20,184,166,0.5)] flex items-center justify-center space-x-2 w-64 mx-auto md:inline-flex group"
-            >
-              <span className="group-hover:animate-bounce">🌸</span>
-              <span>Hayal Dünyasına Katıl</span>
-            </button>
-          </div>
-
-          {/* Özellik Kartları */}
-          <div className="mt-24 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-xl transform hover:-translate-y-4 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] border border-green-500/20 group">
-              <div className="text-5xl mb-4 group-hover:animate-bounce">🎨</div>
-              <h3 className="text-2xl font-bold text-green-300 mb-3">
-                Hayal Et ve Çiz
-              </h3>
-              <p className="text-green-100">
-                Hayallerini renkli çizimlerle hayata geçir!
-              </p>
+          {/* Masal Kütüphanesi Kartı */}
+          <div
+            onClick={() => handleCardClick("/library")}
+            className="group relative bg-gradient-to-br from-amber-500/20 to-orange-500/20 rounded-3xl p-8 backdrop-blur-xl border border-white/10 hover:border-white/20 transition-all duration-500 hover:shadow-2xl hover:shadow-amber-500/20 cursor-pointer transform hover:-translate-y-2"
+          >
+            <div className="absolute -inset-1 bg-gradient-to-r from-amber-400 to-orange-400 rounded-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+            <div className="text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-500">
+              📚
             </div>
-            <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-xl transform hover:-translate-y-4 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] border border-green-500/20 group">
-              <div className="text-5xl mb-4 group-hover:animate-bounce">📚</div>
-              <h3 className="text-2xl font-bold text-green-300 mb-3">
-                Hayal Hikayeleri
-              </h3>
-              <p className="text-green-100">
-                Her hayal yeni bir hikaye, her düşünce yeni bir macera!
-              </p>
-            </div>
-            <div className="bg-white/10 backdrop-blur-lg p-8 rounded-3xl shadow-xl transform hover:-translate-y-4 transition-all duration-300 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] border border-green-500/20 group">
-              <div className="text-5xl mb-4 group-hover:animate-bounce">🎮</div>
-              <h3 className="text-2xl font-bold text-green-300 mb-3">
-                Hayal Oyunları
-              </h3>
-              <p className="text-green-100">Hayallerini oyunlarla keşfet!</p>
-            </div>
-          </div>
-
-          {/* Alt Bilgi */}
-          <div className="mt-16 text-center">
-            <p className="text-green-200 text-lg animate-pulse">
-              Güvenli bir hayal yolculuğu için ebeveyn kontrolü 🌿
+            <h3 className="text-2xl font-bold mb-4 text-amber-300">
+              Masal Kütüphanesi
+            </h3>
+            <p className="text-amber-200 leading-relaxed">
+              Binbir gece masallarından modern hikayelere, keşfedilmeyi bekleyen
+              bir dünya!
             </p>
           </div>
+
+          {/* Kahraman Profili Kartı */}
+          <div
+            onClick={() => handleCardClick("/profile")}
+            className="group relative bg-gradient-to-br from-rose-500/20 to-red-500/20 rounded-3xl p-8 backdrop-blur-xl border border-white/10 hover:border-white/20 transition-all duration-500 hover:shadow-2xl hover:shadow-rose-500/20 cursor-pointer transform hover:-translate-y-2"
+          >
+            <div className="absolute -inset-1 bg-gradient-to-r from-rose-400 to-red-400 rounded-3xl opacity-0 group-hover:opacity-20 transition-opacity duration-500" />
+            <div className="text-6xl mb-6 transform group-hover:scale-110 transition-transform duration-500">
+              👑
+            </div>
+            <h3 className="text-2xl font-bold mb-4 text-rose-300">
+              Kahraman Profili
+            </h3>
+            <p className="text-rose-200 leading-relaxed">
+              Kendi masal kahramanını oluştur ve maceralarını kaydet!
+            </p>
+          </div>
+        </div>
+
+        {/* Alt Bilgi */}
+        <div className="text-center mt-16">
+          <p className="text-lg text-purple-200 animate-pulse">
+            ✨ Her gün yeni masallar ve sürprizler sizi bekliyor! ✨
+          </p>
         </div>
       </div>
     </div>
