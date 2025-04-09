@@ -110,7 +110,7 @@ hayal-dunyasi/
 
 ## 📅 Proje İlerleme Durumu
 
-### ✅ Tamamlanan Haftalar (1-4)
+### ✅ Tamamlanan Haftalar (1-5)
 
 1. Hafta: Proje Başlangıcı ve Planlama
 
@@ -129,28 +129,31 @@ hayal-dunyasi/
    - Navigasyon sistemi kuruldu
 
 4. Hafta: Kullanıcı Sistemi
+
    - Kullanıcı kayıt/giriş sistemi
    - Firebase Authentication entegrasyonu
    - Kullanıcı profili yönetimi
-
-### 🔄 Devam Eden Haftalar (5)
 
 5. Hafta: Çizim Sistemi - Temel
    - Temel çizim özellikleri eklendi
    - Canvas entegrasyonu yapıldı
    - Renk paleti ve temel araçlar eklendi
+   - Şekil seçenekleri ve diğer araç ayarları eklendi
 
-### ⏳ Bekleyen Haftalar (6-14)
+### 🔄 Devam Eden Haftalar (6)
 
-6. Hafta: Çizim Sistemi - Gelişmiş
-7. Hafta: Hikaye Oluşturma - Temel
-8. Hafta: Hikaye Oluşturma - Gelişmiş
-9. Hafta: Ses Özellikleri
-10. Hafta: Yapay Zeka - Temel
-11. Hafta: Ebeveyn Paneli
-12. Hafta: Temel Testler
-13. Hafta: Optimizasyon
-14. Hafta: Son Kontroller ve Yayın
+1. Hafta: Çizim Sistemi - Gelişmiş
+
+### ⏳ Bekleyen Haftalar (7-14)
+
+1. Hafta: Hikaye Oluşturma - Temel
+2. Hafta: Hikaye Oluşturma - Gelişmiş
+3. Hafta: Ses Özellikleri
+4. Hafta: Yapay Zeka - Temel
+5. Hafta: Ebeveyn Paneli
+6. Hafta: Temel Testler
+7. Hafta: Optimizasyon
+8. Hafta: Son Kontroller ve Yayın
 
 ## 📄 Lisans
 
