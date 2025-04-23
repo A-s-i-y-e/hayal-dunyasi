@@ -110,7 +110,7 @@ hayal-dunyasi/
 
 ## 📅 Proje İlerleme Durumu
 
-### ✅ Tamamlanan Haftalar (1-5)
+### ✅ Tamamlanan Haftalar (1-7)
 
 1. Hafta: Proje Başlangıcı ve Planlama
 
@@ -135,25 +135,32 @@ hayal-dunyasi/
    - Kullanıcı profili yönetimi
 
 5. Hafta: Çizim Sistemi - Temel
+
    - Temel çizim özellikleri eklendi
    - Canvas entegrasyonu yapıldı
    - Renk paleti ve temel araçlar eklendi
-   - Şekil seçenekleri ve diğer araç ayarları eklendi
 
-### 🔄 Devam Eden Haftalar (6)
+6. Hafta: Çizim Sistemi - Gelişmiş
 
-1. Hafta: Çizim Sistemi - Gelişmiş
+   - Gelişmiş çizim özellikleri eklendi
+   - Desen ve şekil araçları eklendi
+   - Renk paleti ve boyut ayarları eklendi
+   - Katman sistemi entegre edildi
 
-### ⏳ Bekleyen Haftalar (7-14)
+7. Hafta: Hikaye Oluşturma - Temel
+   - Temel hikaye oluşturma özellikleri eklendi
+   - Çizimleri hikayeye dönüştürme sistemi kuruldu
+   - Hikaye kaydetme ve paylaşma özellikleri eklendi
 
-1. Hafta: Hikaye Oluşturma - Temel
-2. Hafta: Hikaye Oluşturma - Gelişmiş
-3. Hafta: Ses Özellikleri
-4. Hafta: Yapay Zeka - Temel
-5. Hafta: Ebeveyn Paneli
-6. Hafta: Temel Testler
-7. Hafta: Optimizasyon
-8. Hafta: Son Kontroller ve Yayın
+### ⏳ Bekleyen Haftalar (8-14)
+
+8. Hafta: Hikaye Oluşturma - Gelişmiş
+9. Hafta: Ses Özellikleri
+10. Hafta: Yapay Zeka - Temel
+11. Hafta: Ebeveyn Paneli
+12. Hafta: Temel Testler
+13. Hafta: Optimizasyon
+14. Hafta: Son Kontroller ve Yayın
 
 ## 📄 Lisans
 
