@@ -1,298 +1,312 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useEffect, useRef, useState, forwardRef } from "react";
+import { auth } from "../services/firebase";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import {
+  getFirestore,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 
-interface CanvasProps {
+interface DrawingCanvasProps {
+  selectedTool: string;
   color: string;
   brushSize: number;
-  isDrawing: boolean;
-  setIsDrawing: (isDrawing: boolean) => void;
   opacity: number;
   pattern: string;
-  selectedTool: string;
+  shapeType: string;
+  onDrawingChange: (data: string) => void;
 }
 
-export const Canvas: React.FC<CanvasProps> = ({
-  color,
-  brushSize,
-  isDrawing,
-  setIsDrawing,
-  opacity,
-  pattern,
-  selectedTool,
-}) => {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const contextRef = useRef<CanvasRenderingContext2D | null>(null);
-  const [startPoint, setStartPoint] = useState<{ x: number; y: number } | null>(
-    null
-  );
-  const [history, setHistory] = useState<ImageData[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
+interface Layer {
+  type: string;
+  data: string;
+  color?: string;
+  brushSize?: number;
+  opacity?: number;
+  pattern?: string;
+  shapeType?: string;
+  zIndex: number;
+}
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+const DrawingCanvas = forwardRef<HTMLCanvasElement, DrawingCanvasProps>(
+  (props, ref) => {
+    const {
+      selectedTool,
+      color,
+      brushSize,
+      opacity,
+      pattern,
+      shapeType,
+      onDrawingChange,
+    } = props;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+    const [isDrawing, setIsDrawing] = useState(false);
+    const startPoint = useRef<{ x: number; y: number } | null>(null);
+    const [fillColor, setFillColor] = useState<string | null>(null);
+    const [patterns, setPatterns] = useState<
+      Array<{ type: string; color: string; brushSize: number }>
+    >([]);
 
-    // Canvas boyutunu ayarla
-    const resizeCanvas = () => {
-      canvas.width = canvas.offsetWidth;
-      canvas.height = canvas.offsetHeight;
-      ctx.fillStyle = "white";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    };
+    useEffect(() => {
+      const canvas = ref as React.RefObject<HTMLCanvasElement>;
+      if (!canvas.current) return;
 
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
+      const ctx = canvas.current.getContext("2d");
+      if (!ctx) return;
 
-    return () => {
-      window.removeEventListener("resize", resizeCanvas);
-    };
-  }, []);
+      // Canvas boyutunu ayarla
+      canvas.current.width = 1600;
+      canvas.current.height = 1000;
 
-  useEffect(() => {
-    if (contextRef.current) {
-      contextRef.current.strokeStyle = color;
-      contextRef.current.lineWidth = brushSize;
-      contextRef.current.globalAlpha = opacity / 100;
-
-      // Desen ayarlarını uygula
-      switch (pattern) {
-        case "dotted":
-          contextRef.current.setLineDash([2, 2]);
-          break;
-        case "dashed":
-          contextRef.current.setLineDash([5, 5]);
-          break;
-        case "zigzag":
-          contextRef.current.setLineDash([10, 5, 2, 5]);
-          break;
-        default:
-          contextRef.current.setLineDash([]);
+      // Canvas'ı temizle ve dolguyu uygula
+      ctx.clearRect(0, 0, canvas.current.width, canvas.current.height);
+      if (fillColor) {
+        ctx.fillStyle = fillColor;
+        ctx.fillRect(0, 0, canvas.current.width, canvas.current.height);
+      } else {
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.current.width, canvas.current.height);
       }
-    }
-  }, [color, brushSize, opacity, pattern]);
 
-  const startDrawing = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+      // Desenleri çiz
+      patterns.forEach((pattern) => {
+        ctx.strokeStyle = pattern.color;
+        ctx.lineWidth = pattern.brushSize;
+        ctx.globalAlpha = opacity / 100;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+        if (pattern.type === "dots") {
+          for (let i = 0; i < 100; i++) {
+            const dotX = Math.random() * canvas.current!.width;
+            const dotY = Math.random() * canvas.current!.height;
+            ctx.beginPath();
+            ctx.arc(dotX, dotY, pattern.brushSize / 2, 0, Math.PI * 2);
+            ctx.fillStyle = pattern.color;
+            ctx.fill();
+          }
+        } else if (pattern.type === "hearts") {
+          for (let i = 0; i < 50; i++) {
+            const heartX = Math.random() * canvas.current!.width;
+            const heartY = Math.random() * canvas.current!.height;
+            drawHeart(ctx, heartX, heartY, pattern.brushSize, pattern.color);
+          }
+        }
+      });
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
+      // Çizimi kaydet
+      onDrawingChange(canvas.current.toDataURL());
+    }, [fillColor, patterns, opacity, ref, onDrawingChange]);
 
-    setIsDrawing(true);
-    setStartPoint({ x, y });
+    const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+      if (!isDrawing) return;
 
-    // Yeni çizim başladığında geçmişi güncelle
-    if (historyIndex < history.length - 1) {
-      setHistory(history.slice(0, historyIndex + 1));
-    }
-    setHistory([
-      ...history,
-      ctx.getImageData(0, 0, canvas.width, canvas.height),
-    ]);
-    setHistoryIndex(historyIndex + 1);
-  };
+      const canvas = ref as React.RefObject<HTMLCanvasElement>;
+      if (!canvas.current) return;
 
-  const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-    if (!isDrawing) return;
+      const ctx = canvas.current.getContext("2d");
+      if (!ctx) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+      const rect = canvas.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = brushSize;
+      ctx.globalAlpha = opacity / 100;
 
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-
-    ctx.globalAlpha = opacity / 100;
-    ctx.strokeStyle = color;
-    ctx.lineWidth = brushSize;
-    ctx.lineCap = "round";
-    ctx.lineJoin = "round";
-
-    switch (selectedTool) {
-      case "brush":
-        if (startPoint) {
-          ctx.beginPath();
-          ctx.moveTo(startPoint.x, startPoint.y);
+      switch (selectedTool) {
+        case "brush":
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
           ctx.lineTo(x, y);
           ctx.stroke();
-          setStartPoint({ x, y });
-        }
-        break;
+          break;
 
-      case "eraser":
-        ctx.globalCompositeOperation = "destination-out";
-        if (startPoint) {
-          ctx.beginPath();
-          ctx.moveTo(startPoint.x, startPoint.y);
+        case "eraser":
+          ctx.strokeStyle = "white";
+          ctx.lineCap = "round";
+          ctx.lineJoin = "round";
           ctx.lineTo(x, y);
           ctx.stroke();
-          setStartPoint({ x, y });
-        }
-        ctx.globalCompositeOperation = "source-over";
-        break;
+          break;
 
-      case "shape":
-        if (startPoint) {
-          // Önceki çizimi temizle
-          ctx.putImageData(history[historyIndex], 0, 0);
+        case "fill":
+          setFillColor(color);
+          break;
+
+        case "pattern":
+          setPatterns([...patterns, { type: pattern, color, brushSize }]);
+          break;
+
+        case "shape":
+          if (!startPoint.current) {
+            startPoint.current = { x, y };
+            return;
+          }
 
           ctx.beginPath();
-          switch (pattern) {
+          switch (shapeType) {
             case "rectangle":
               ctx.rect(
-                startPoint.x,
-                startPoint.y,
-                x - startPoint.x,
-                y - startPoint.y
+                startPoint.current.x,
+                startPoint.current.y,
+                x - startPoint.current.x,
+                y - startPoint.current.y
               );
               break;
+
             case "circle":
               const radius = Math.sqrt(
-                Math.pow(x - startPoint.x, 2) + Math.pow(y - startPoint.y, 2)
+                Math.pow(x - startPoint.current.x, 2) +
+                  Math.pow(y - startPoint.current.y, 2)
               );
-              ctx.arc(startPoint.x, startPoint.y, radius, 0, Math.PI * 2);
-              break;
-            case "triangle":
-              ctx.moveTo(startPoint.x, startPoint.y);
-              ctx.lineTo(x, y);
-              ctx.lineTo(startPoint.x * 2 - x, y);
-              ctx.closePath();
-              break;
-            case "line":
-              ctx.moveTo(startPoint.x, startPoint.y);
-              ctx.lineTo(x, y);
-              break;
-            case "star":
-              const points = 5;
-              const outerRadius = Math.sqrt(
-                Math.pow(x - startPoint.x, 2) + Math.pow(y - startPoint.y, 2)
+              ctx.arc(
+                startPoint.current.x,
+                startPoint.current.y,
+                radius,
+                0,
+                Math.PI * 2
               );
-              const innerRadius = outerRadius / 2;
-              const angle = Math.PI / points;
+              break;
 
-              ctx.moveTo(startPoint.x, startPoint.y - outerRadius);
-              for (let i = 0; i < points * 2; i++) {
-                const radius = i % 2 === 0 ? outerRadius : innerRadius;
-                const currentAngle = angle * i;
-                ctx.lineTo(
-                  startPoint.x + Math.sin(currentAngle) * radius,
-                  startPoint.y - Math.cos(currentAngle) * radius
-                );
-              }
+            case "triangle":
+              ctx.moveTo(startPoint.current.x, startPoint.current.y);
+              ctx.lineTo(x, y);
+              ctx.lineTo(startPoint.current.x * 2 - x, y);
               ctx.closePath();
+              break;
+
+            case "line":
+              ctx.moveTo(startPoint.current.x, startPoint.current.y);
+              ctx.lineTo(x, y);
+              break;
+
+            case "star":
+              drawStar(
+                ctx,
+                startPoint.current.x,
+                startPoint.current.y,
+                Math.abs(x - startPoint.current.x),
+                brushSize,
+                color
+              );
               break;
           }
           ctx.stroke();
+          break;
+      }
+
+      // Çizimi kaydet
+      onDrawingChange(canvas.current.toDataURL());
+    };
+
+    const drawHeart = (
+      ctx: CanvasRenderingContext2D,
+      x: number,
+      y: number,
+      size: number,
+      color: string
+    ) => {
+      ctx.beginPath();
+      ctx.moveTo(x, y + size / 4);
+      ctx.bezierCurveTo(x, y, x - size / 2, y, x - size / 2, y + size / 4);
+      ctx.bezierCurveTo(
+        x - size / 2,
+        y + size / 2,
+        x,
+        y + size / 2,
+        x,
+        y + size
+      );
+      ctx.bezierCurveTo(
+        x,
+        y + size / 2,
+        x + size / 2,
+        y + size / 2,
+        x + size / 2,
+        y + size / 4
+      );
+      ctx.bezierCurveTo(x + size / 2, y, x, y, x, y + size / 4);
+      ctx.fillStyle = color;
+      ctx.fill();
+    };
+
+    const drawStar = (
+      ctx: CanvasRenderingContext2D,
+      x: number,
+      y: number,
+      radius: number,
+      size: number,
+      color: string
+    ) => {
+      const spikes = 5;
+      const innerRadius = radius * 0.4;
+
+      ctx.beginPath();
+      for (let i = 0; i < spikes * 2; i++) {
+        const r = i % 2 === 0 ? radius : innerRadius;
+        const angle = (Math.PI / spikes) * i;
+        const px = x + Math.cos(angle) * r;
+        const py = y + Math.sin(angle) * r;
+        if (i === 0) {
+          ctx.moveTo(px, py);
+        } else {
+          ctx.lineTo(px, py);
         }
-        break;
+      }
+      ctx.closePath();
+      ctx.fillStyle = color;
+      ctx.fill();
+    };
 
-      case "spray":
-        const density = 10; // Sprey yoğunluğu
-        for (let i = 0; i < density; i++) {
-          const angle = Math.random() * Math.PI * 2;
-          const radius = Math.random() * brushSize;
-          const sprayX = x + Math.cos(angle) * radius;
-          const sprayY = y + Math.sin(angle) * radius;
-          ctx.fillStyle = color;
-          ctx.fillRect(sprayX, sprayY, 1, 1);
-        }
-        break;
-    }
-  };
+    const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
+      setIsDrawing(true);
+      const canvas = ref as React.RefObject<HTMLCanvasElement>;
+      if (!canvas.current) return;
 
-  const stopDrawing = () => {
-    setIsDrawing(false);
-    setStartPoint(null);
-  };
-
-  const undo = () => {
-    if (historyIndex > 0) {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      const ctx = canvas.getContext("2d");
+      const ctx = canvas.current.getContext("2d");
       if (!ctx) return;
 
-      setHistoryIndex(historyIndex - 1);
-      ctx.putImageData(history[historyIndex - 1], 0, 0);
-    }
-  };
+      const rect = canvas.current.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
 
-  const redo = () => {
-    if (historyIndex < history.length - 1) {
-      const canvas = canvasRef.current;
-      if (!canvas) return;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
 
-      const ctx = canvas.getContext("2d");
+      if (selectedTool === "shape") {
+        startPoint.current = { x, y };
+      }
+    };
+
+    const handleMouseUp = () => {
+      setIsDrawing(false);
+      const canvas = ref as React.RefObject<HTMLCanvasElement>;
+      if (!canvas.current) return;
+
+      const ctx = canvas.current.getContext("2d");
       if (!ctx) return;
 
-      setHistoryIndex(historyIndex + 1);
-      ctx.putImageData(history[historyIndex + 1], 0, 0);
-    }
-  };
+      ctx.beginPath();
+      startPoint.current = null;
+    };
 
-  const clearCanvas = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    setHistory([]);
-    setHistoryIndex(-1);
-  };
-
-  return (
-    <div className="relative h-full group">
-      <canvas
-        ref={canvasRef}
-        onMouseDown={startDrawing}
-        onMouseMove={draw}
-        onMouseUp={stopDrawing}
-        onMouseLeave={stopDrawing}
-        className="w-full h-full bg-white rounded-lg shadow-inner border border-gray-200 cursor-crosshair transition-all duration-300 hover:border-purple-300"
-      />
-
-      {/* Araç Çubuğu */}
-      <div className="absolute bottom-2 right-2 bg-white/90 backdrop-blur-lg rounded-full p-1 opacity-0 group-hover:opacity-100 transition-all duration-300 flex space-x-1 shadow-lg border border-gray-200">
-        <button
-          onClick={clearCanvas}
-          className="p-2 rounded-full bg-red-500/20 hover:bg-red-500/30 text-red-600 transition-all duration-300 transform hover:scale-110"
-          title="Temizle"
-        >
-          🗑️
-        </button>
-        <button
-          onClick={undo}
-          className="p-2 rounded-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-600 transition-all duration-300 transform hover:scale-110"
-          title="Geri Al"
-        >
-          ↩️
-        </button>
-        <button
-          onClick={redo}
-          className="p-2 rounded-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-600 transition-all duration-300 transform hover:scale-110"
-          title="İleri Al"
-        >
-          ↪️
-        </button>
-        <button
-          className="p-2 rounded-full bg-purple-500/20 hover:bg-purple-500/30 text-purple-600 transition-all duration-300 transform hover:scale-110"
-          title="Kaydet"
-        >
-          💾
-        </button>
+    return (
+      <div className="w-full h-full flex items-center justify-center p-4 bg-gradient-to-br from-purple-100 to-pink-100">
+        <canvas
+          ref={ref}
+          onMouseDown={handleMouseDown}
+          onMouseMove={draw}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          className="border border-gray-300 rounded-lg shadow-lg max-w-full max-h-full bg-white"
+        />
       </div>
-    </div>
-  );
-};
+    );
+  }
+);
+
+DrawingCanvas.displayName = "DrawingCanvas";
+
+export default DrawingCanvas;

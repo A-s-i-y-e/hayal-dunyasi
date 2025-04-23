@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 
 const Library: React.FC = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -53,10 +53,11 @@ const Library: React.FC = () => {
     },
     {
       title: "Hikayeni Yaz",
-      description: "Kendi hikayeni yaz ve paylaş!",
+      description:
+        "Kendi hikayeni yaz ve başkalarıyla paylaş! Hayal gücünü kullanarak harika hikayeler oluşturabilirsin.",
       icon: "✍️",
-      path: "/library/create-story",
-      gradient: "from-green-500 to-emerald-500",
+      path: "/create-story-form",
+      gradient: "from-red-500 to-pink-500",
     },
   ];
 
