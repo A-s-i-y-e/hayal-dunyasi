@@ -10,7 +10,6 @@ import { onAuthStateChanged, User } from "firebase/auth";
 import { AuthProvider } from "./contexts/AuthContext";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
-import Stories from "./pages/Stories";
 import DrawingWorkshop from "./pages/DrawingWorkshop";
 import Library from "./pages/Library";
 import Profile from "./pages/Profile";
@@ -24,6 +23,8 @@ import Puzzle from "./pages/games/Puzzle";
 import Favorites from "./pages/library/Favorites";
 import Tales from "./pages/library/Tales";
 import NewStories from "./pages/library/NewStories";
+import CreateStory from "./pages/CreateStory";
+import CreateStoryForm from "./pages/CreateStoryForm";
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -57,16 +58,12 @@ const App: React.FC = () => {
               element={user ? <Home /> : <Navigate to="/login" />}
             />
             <Route
-              path="/stories"
-              element={user ? <Stories /> : <Navigate to="/login" />}
+              path="/library"
+              element={user ? <Library /> : <Navigate to="/login" />}
             />
             <Route
               path="/drawing-workshop"
               element={user ? <DrawingWorkshop /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/library"
-              element={user ? <Library /> : <Navigate to="/login" />}
             />
             <Route
               path="/profile"
@@ -111,6 +108,14 @@ const App: React.FC = () => {
             <Route
               path="/library/new-stories"
               element={user ? <NewStories /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/create-story"
+              element={user ? <CreateStory /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/create-story-form"
+              element={user ? <CreateStoryForm /> : <Navigate to="/login" />}
             />
           </Routes>
         </div>
