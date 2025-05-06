@@ -58,7 +58,7 @@ cp .env.example .env
 
 5. `.env` dosyasını Firebase yapılandırma bilgilerinizle güncelleyin:
 
-```
+```bash
 REACT_APP_FIREBASE_API_KEY=your_api_key
 REACT_APP_FIREBASE_AUTH_DOMAIN=your_auth_domain
 REACT_APP_FIREBASE_PROJECT_ID=your_project_id
@@ -110,7 +110,7 @@ hayal-dunyasi/
 
 ## 📅 Proje İlerleme Durumu
 
-### ✅ Tamamlanan Haftalar (1-7)
+### ✅ Tamamlanan Haftalar (1-9)
 
 1. Hafta: Proje Başlangıcı ve Planlama
 
@@ -148,19 +148,30 @@ hayal-dunyasi/
    - Katman sistemi entegre edildi
 
 7. Hafta: Hikaye Oluşturma - Temel
+
    - Temel hikaye oluşturma özellikleri eklendi
    - Çizimleri hikayeye dönüştürme sistemi kuruldu
    - Hikaye kaydetme ve paylaşma özellikleri eklendi
 
-### ⏳ Bekleyen Haftalar (8-14)
-
 8. Hafta: Hikaye Oluşturma - Gelişmiş
+
+   - Gelişmiş hikaye düzenleme özellikleri eklendi
+   - Çoklu sayfa desteği ve sayfa sıralaması
+   - Hikaye şablonları ve özelleştirme seçenekleri
+
 9. Hafta: Ses Özellikleri
-10. Hafta: Yapay Zeka - Temel
-11. Hafta: Ebeveyn Paneli
-12. Hafta: Temel Testler
-13. Hafta: Optimizasyon
-14. Hafta: Son Kontroller ve Yayın
+
+   - Hikayelere ses ekleme özelliği
+   - Ses kayıt ve düzenleme araçları
+   - Arka plan müziği entegrasyonu
+
+### ⏳ Bekleyen Haftalar (10-14)
+
+1. Hafta: Yapay Zeka - Temel
+2. Hafta: Ebeveyn Paneli
+3. Hafta: Temel Testler
+4. Hafta: Optimizasyon
+5. Hafta: Son Kontroller ve Yayın
 
 ## 📄 Lisans
 
