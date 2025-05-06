@@ -19,7 +19,7 @@ interface Story {
   userName: string;
 }
 
-const Favorites: React.FC = () => {
+const MyStories: React.FC = () => {
   const navigate = useNavigate();
   const [stories, setStories] = useState<Story[]>([]);
   const [selectedStory, setSelectedStory] = useState<Story | null>(null);
@@ -28,38 +28,24 @@ const Favorites: React.FC = () => {
   const auth = getAuth();
 
   useEffect(() => {
-    const fetchLikedStories = async () => {
+    const fetchUserStories = async () => {
       try {
         if (!auth.currentUser) {
           navigate("/login");
           return;
         }
 
-        console.log("Beğenilen hikayeler getiriliyor...");
-        const likesRef = collection(db, "likes");
-        const q = query(likesRef, where("userId", "==", auth.currentUser.uid));
-        const likesSnapshot = await getDocs(q);
-
-        const likedStoryIds = likesSnapshot.docs.map(
-          (doc) => doc.data().storyId
-        );
-
-        if (likedStoryIds.length === 0) {
-          setStories([]);
-          setLoading(false);
-          return;
-        }
-
+        console.log("Kullanıcının hikayeleri getiriliyor...");
         const storiesRef = collection(db, "stories");
-        const storiesQuery = query(
+        const q = query(
           storiesRef,
-          where("id", "in", likedStoryIds)
+          where("userId", "==", auth.currentUser.uid)
         );
-        const storiesSnapshot = await getDocs(storiesQuery);
+        const querySnapshot = await getDocs(q);
 
-        console.log("Bulunan beğenilen hikaye sayısı:", storiesSnapshot.size);
+        console.log("Bulunan hikaye sayısı:", querySnapshot.size);
 
-        const fetchedStories = storiesSnapshot.docs.map((doc) => {
+        const fetchedStories = querySnapshot.docs.map((doc) => {
           const data = doc.data();
           console.log("Hikaye ID:", doc.id);
           console.log("Hikaye verisi:", data);
@@ -89,19 +75,19 @@ const Favorites: React.FC = () => {
           } as Story;
         });
 
-        console.log("İşlenmiş beğenilen hikayeler:", fetchedStories);
+        console.log("İşlenmiş hikayeler:", fetchedStories);
         setStories(fetchedStories);
       } catch (error) {
-        console.error("Beğenilen hikayeler yüklenirken hata oluştu:", error);
+        console.error("Hikayeler yüklenirken hata oluştu:", error);
         setError(
-          "Beğenilen hikayeler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin."
+          "Hikayeler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin."
         );
       } finally {
         setLoading(false);
       }
     };
 
-    fetchLikedStories();
+    fetchUserStories();
   }, [navigate]);
 
   const handleStoryClick = (story: Story) => {
@@ -117,9 +103,7 @@ const Favorites: React.FC = () => {
       <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-8 pt-24 flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-xl text-gray-600">
-            Beğenilen hikayeler yükleniyor...
-          </p>
+          <p className="text-xl text-gray-600">Hikayeler yükleniyor...</p>
         </div>
       </div>
     );
@@ -146,23 +130,23 @@ const Favorites: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
           <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-600 to-pink-600 mb-6">
-            Beğenilen Hikayeler
+            Hikayelerim
           </h1>
           <p className="text-2xl text-gray-600">
-            Beğendiğin hikayeleri buradan okuyabilirsin!
+            Kendi hikayelerini buradan okuyabilirsin!
           </p>
         </div>
 
         {stories.length === 0 ? (
           <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg">
             <p className="text-xl text-gray-600">
-              Henüz beğendiğin bir hikaye yok.
+              Henüz hikaye oluşturmamışsın.
             </p>
             <button
-              onClick={() => navigate("/stories")}
+              onClick={() => navigate("/create-story-form")}
               className="mt-4 px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
             >
-              Hikayeleri Keşfet
+              İlk Hikayeni Yaz
             </button>
           </div>
         ) : (
@@ -231,4 +215,4 @@ const Favorites: React.FC = () => {
   );
 };
 
-export default Favorites;
+export default MyStories;

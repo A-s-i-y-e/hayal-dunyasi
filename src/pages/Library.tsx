@@ -15,7 +15,7 @@ const Library: React.FC = () => {
     { id: "folk", name: "Halk Masalı", icon: "🏰" },
   ];
 
-  // Örnek masal verileri
+  // Örnek hikaye verileri
   const stories = [
     {
       id: 1,
@@ -26,23 +26,23 @@ const Library: React.FC = () => {
       image: "🏰",
       description: "Yüz yıllık uykuya dalan bir prensesin büyülü hikayesi...",
     },
-    // Diğer masallar buraya eklenecek
+    // Diğer hikayeler buraya eklenecek
   ];
 
   const sections = [
     {
-      title: "Masallar",
-      description: "Klasik masalları keşfet ve oku!",
+      title: "Hikayeler",
+      description: "Tüm hikayeleri keşfet ve oku!",
       icon: "📚",
-      path: "/library/tales",
-      gradient: "from-purple-500 to-pink-500",
+      path: "/stories",
+      gradient: "from-blue-500 to-cyan-500",
     },
     {
-      title: "Yeni Hikayeler",
-      description: "Yeni eklenen hikayeleri keşfet!",
-      icon: "✨",
-      path: "/library/new-stories",
-      gradient: "from-blue-500 to-cyan-500",
+      title: "Hikayelerim",
+      description: "Kendi hikayelerini keşfet ve oku!",
+      icon: "📖",
+      path: "/library/my-stories",
+      gradient: "from-purple-500 to-pink-500",
     },
     {
       title: "Favoriler",
@@ -57,7 +57,7 @@ const Library: React.FC = () => {
         "Kendi hikayeni yaz ve başkalarıyla paylaş! Hayal gücünü kullanarak harika hikayeler oluşturabilirsin.",
       icon: "✍️",
       path: "/create-story-form",
-      gradient: "from-red-500 to-pink-500",
+      gradient: "from-green-500 to-emerald-500",
     },
   ];
 
@@ -65,11 +65,11 @@ const Library: React.FC = () => {
     <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-8 pt-24">
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-16">
-          <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600 mb-6">
-            Hikaye Dünyası
+          <h1 className="text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 to-pink-600 mb-6">
+            Hikayelerim
           </h1>
           <p className="text-2xl text-gray-600">
-            Hikayelerle dolu bir dünyaya hoş geldin!
+            Kendi hikayelerini keşfet ve oku!
           </p>
         </div>
 

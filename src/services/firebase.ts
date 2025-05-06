@@ -1,31 +1,12 @@
-import { initializeApp } from "firebase/app";
 import {
-  getAuth,
   signOut as firebaseSignOut,
   User,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
   updateProfile,
 } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { getAnalytics } from "firebase/analytics";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyBZd34mxld_RxluU34LrvBBRO8trt3PFXo",
-  authDomain: "hayal-dunyasi.firebaseapp.com",
-  projectId: "hayal-dunyasi",
-  storageBucket: "hayal-dunyasi.firebasestorage.app",
-  messagingSenderId: "875624820974",
-  appId: "1:875624820974:web:471a827e14117b441c83ff",
-  measurementId: "G-4JEQEPKFQ4",
-};
-
-const app = initializeApp(firebaseConfig);
-export const analytics = getAnalytics(app);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
-export const storage = getStorage(app);
+import { auth, db, storage } from "../firebase/config";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 // Kayıt olma fonksiyonu
 export const registerUser = async (
@@ -91,11 +72,13 @@ export const uploadProfilePicture = async (
   }
 };
 
+// Firebase servislerini yeniden export et
+export { auth, db, storage };
+
 const firebaseService = {
   auth,
   db,
   storage,
-  analytics,
   registerUser,
   loginUser,
   signOutUser,
