@@ -1,13 +1,4 @@
 import React, { useEffect, useRef, useState, forwardRef } from "react";
-import { auth } from "../services/firebase";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import {
-  getFirestore,
-  collection,
-  addDoc,
-  serverTimestamp,
-} from "firebase/firestore";
-import { useNavigate } from "react-router-dom";
 
 interface DrawingCanvasProps {
   selectedTool: string;
@@ -17,17 +8,6 @@ interface DrawingCanvasProps {
   pattern: string;
   shapeType: string;
   onDrawingChange: (data: string) => void;
-}
-
-interface Layer {
-  type: string;
-  data: string;
-  color?: string;
-  brushSize?: number;
-  opacity?: number;
-  pattern?: string;
-  shapeType?: string;
-  zIndex: number;
 }
 
 const DrawingCanvas = forwardRef<HTMLCanvasElement, DrawingCanvasProps>(
@@ -48,91 +28,96 @@ const DrawingCanvas = forwardRef<HTMLCanvasElement, DrawingCanvasProps>(
     const [patterns, setPatterns] = useState<
       Array<{ type: string; color: string; brushSize: number }>
     >([]);
+    const contextRef = useRef<CanvasRenderingContext2D | null>(null);
 
+    // Canvas'ı başlat
     useEffect(() => {
       const canvas = ref as React.RefObject<HTMLCanvasElement>;
       if (!canvas.current) return;
 
-      const ctx = canvas.current.getContext("2d");
-      if (!ctx) return;
-
-      // Canvas boyutunu ayarla
-      canvas.current.width = 1600;
-      canvas.current.height = 1000;
-
-      // Canvas'ı temizle ve dolguyu uygula
-      ctx.clearRect(0, 0, canvas.current.width, canvas.current.height);
-      if (fillColor) {
-        ctx.fillStyle = fillColor;
-        ctx.fillRect(0, 0, canvas.current.width, canvas.current.height);
-      } else {
-        ctx.fillStyle = "white";
-        ctx.fillRect(0, 0, canvas.current.width, canvas.current.height);
+      // Canvas'ı container boyutuna göre ayarla
+      const container = canvas.current.parentElement;
+      if (container) {
+        const rect = container.getBoundingClientRect();
+        canvas.current.width = rect.width;
+        canvas.current.height = rect.height;
       }
 
-      // Desenleri çiz
-      patterns.forEach((pattern) => {
-        ctx.strokeStyle = pattern.color;
-        ctx.lineWidth = pattern.brushSize;
-        ctx.globalAlpha = opacity / 100;
-
-        if (pattern.type === "dots") {
-          for (let i = 0; i < 100; i++) {
-            const dotX = Math.random() * canvas.current!.width;
-            const dotY = Math.random() * canvas.current!.height;
-            ctx.beginPath();
-            ctx.arc(dotX, dotY, pattern.brushSize / 2, 0, Math.PI * 2);
-            ctx.fillStyle = pattern.color;
-            ctx.fill();
-          }
-        } else if (pattern.type === "hearts") {
-          for (let i = 0; i < 50; i++) {
-            const heartX = Math.random() * canvas.current!.width;
-            const heartY = Math.random() * canvas.current!.height;
-            drawHeart(ctx, heartX, heartY, pattern.brushSize, pattern.color);
-          }
-        }
-      });
-
-      // Çizimi kaydet
-      onDrawingChange(canvas.current.toDataURL());
-    }, [fillColor, patterns, opacity, ref, onDrawingChange]);
-
-    const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
-      if (!isDrawing) return;
-
-      const canvas = ref as React.RefObject<HTMLCanvasElement>;
-      if (!canvas.current) return;
-
       const ctx = canvas.current.getContext("2d");
       if (!ctx) return;
 
-      const rect = canvas.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
+      // Canvas ayarlarını yap
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
       ctx.strokeStyle = color;
       ctx.lineWidth = brushSize;
       ctx.globalAlpha = opacity / 100;
 
+      // Referansları kaydet
+      contextRef.current = ctx;
+
+      // Canvas'ı temizle ve dolguyu uygula
+      ctx.clearRect(0, 0, canvas.current.width, canvas.current.height);
+      ctx.fillStyle = "white";
+      ctx.fillRect(0, 0, canvas.current.width, canvas.current.height);
+    }, [ref]);
+
+    // Renk, fırça boyutu veya opaklık değiştiğinde canvas ayarlarını güncelle
+    useEffect(() => {
+      if (!contextRef.current) return;
+
+      contextRef.current.strokeStyle = color;
+      contextRef.current.lineWidth = brushSize;
+      contextRef.current.globalAlpha = opacity / 100;
+    }, [color, brushSize, opacity]);
+
+    const draw = (e: React.MouseEvent<HTMLCanvasElement>) => {
+      if (!isDrawing || !contextRef.current) return;
+
+      const canvas = ref as React.RefObject<HTMLCanvasElement>;
+      if (!canvas.current) return;
+
+      const rect = canvas.current.getBoundingClientRect();
+      const scaleX = canvas.current.width / rect.width;
+      const scaleY = canvas.current.height / rect.height;
+
+      const x = (e.clientX - rect.left) * scaleX;
+      const y = (e.clientY - rect.top) * scaleY;
+
+      const ctx = contextRef.current;
+
       switch (selectedTool) {
         case "brush":
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
+          if (!startPoint.current) {
+            startPoint.current = { x, y };
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            return;
+          }
           ctx.lineTo(x, y);
           ctx.stroke();
           break;
 
         case "eraser":
+          if (!startPoint.current) {
+            startPoint.current = { x, y };
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            return;
+          }
           ctx.strokeStyle = "white";
-          ctx.lineCap = "round";
-          ctx.lineJoin = "round";
           ctx.lineTo(x, y);
           ctx.stroke();
+          ctx.strokeStyle = color; // Rengi geri ayarla
           break;
 
         case "fill":
           setFillColor(color);
+          if (canvas.current) {
+            ctx.fillStyle = color;
+            ctx.fillRect(0, 0, canvas.current.width, canvas.current.height);
+            onDrawingChange(canvas.current.toDataURL());
+          }
           break;
 
         case "pattern":
@@ -146,6 +131,10 @@ const DrawingCanvas = forwardRef<HTMLCanvasElement, DrawingCanvasProps>(
           }
 
           ctx.beginPath();
+          ctx.strokeStyle = color;
+          ctx.lineWidth = brushSize;
+          ctx.globalAlpha = opacity / 100;
+
           switch (shapeType) {
             case "rectangle":
               ctx.rect(
@@ -154,6 +143,9 @@ const DrawingCanvas = forwardRef<HTMLCanvasElement, DrawingCanvasProps>(
                 x - startPoint.current.x,
                 y - startPoint.current.y
               );
+              ctx.stroke();
+              ctx.fillStyle = color;
+              ctx.fill();
               break;
 
             case "circle":
@@ -168,6 +160,9 @@ const DrawingCanvas = forwardRef<HTMLCanvasElement, DrawingCanvasProps>(
                 0,
                 Math.PI * 2
               );
+              ctx.stroke();
+              ctx.fillStyle = color;
+              ctx.fill();
               break;
 
             case "triangle":
@@ -175,11 +170,15 @@ const DrawingCanvas = forwardRef<HTMLCanvasElement, DrawingCanvasProps>(
               ctx.lineTo(x, y);
               ctx.lineTo(startPoint.current.x * 2 - x, y);
               ctx.closePath();
+              ctx.stroke();
+              ctx.fillStyle = color;
+              ctx.fill();
               break;
 
             case "line":
               ctx.moveTo(startPoint.current.x, startPoint.current.y);
               ctx.lineTo(x, y);
+              ctx.stroke();
               break;
 
             case "star":
@@ -188,73 +187,47 @@ const DrawingCanvas = forwardRef<HTMLCanvasElement, DrawingCanvasProps>(
                 startPoint.current.x,
                 startPoint.current.y,
                 Math.abs(x - startPoint.current.x),
-                brushSize,
+                5,
                 color
               );
               break;
           }
-          ctx.stroke();
           break;
       }
 
       // Çizimi kaydet
-      onDrawingChange(canvas.current.toDataURL());
-    };
-
-    const drawHeart = (
-      ctx: CanvasRenderingContext2D,
-      x: number,
-      y: number,
-      size: number,
-      color: string
-    ) => {
-      ctx.beginPath();
-      ctx.moveTo(x, y + size / 4);
-      ctx.bezierCurveTo(x, y, x - size / 2, y, x - size / 2, y + size / 4);
-      ctx.bezierCurveTo(
-        x - size / 2,
-        y + size / 2,
-        x,
-        y + size / 2,
-        x,
-        y + size
-      );
-      ctx.bezierCurveTo(
-        x,
-        y + size / 2,
-        x + size / 2,
-        y + size / 2,
-        x + size / 2,
-        y + size / 4
-      );
-      ctx.bezierCurveTo(x + size / 2, y, x, y, x, y + size / 4);
-      ctx.fillStyle = color;
-      ctx.fill();
+      if (canvas.current) {
+        onDrawingChange(canvas.current.toDataURL());
+      }
     };
 
     const drawStar = (
       ctx: CanvasRenderingContext2D,
       x: number,
       y: number,
-      radius: number,
       size: number,
+      spikes: number,
       color: string
     ) => {
-      const spikes = 5;
-      const innerRadius = radius * 0.4;
+      let rot = (Math.PI / 2) * 3;
+      let cx = x;
+      let cy = y;
+      let step = Math.PI / spikes;
 
       ctx.beginPath();
-      for (let i = 0; i < spikes * 2; i++) {
-        const r = i % 2 === 0 ? radius : innerRadius;
-        const angle = (Math.PI / spikes) * i;
-        const px = x + Math.cos(angle) * r;
-        const py = y + Math.sin(angle) * r;
-        if (i === 0) {
-          ctx.moveTo(px, py);
-        } else {
-          ctx.lineTo(px, py);
-        }
+      ctx.moveTo(cx, cy - size);
+      for (let i = 0; i < spikes; i++) {
+        x = cx + Math.cos(rot) * size;
+        y = cy + Math.sin(rot) * size;
+        ctx.lineTo(x, y);
+        rot += step;
+
+        x = cx + Math.cos(rot) * (size / 2);
+        y = cy + Math.sin(rot) * (size / 2);
+        ctx.lineTo(x, y);
+        rot += step;
       }
+      ctx.lineTo(cx, cy - size);
       ctx.closePath();
       ctx.fillStyle = color;
       ctx.fill();
@@ -262,47 +235,43 @@ const DrawingCanvas = forwardRef<HTMLCanvasElement, DrawingCanvasProps>(
 
     const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
       setIsDrawing(true);
-      const canvas = ref as React.RefObject<HTMLCanvasElement>;
-      if (!canvas.current) return;
-
-      const ctx = canvas.current.getContext("2d");
-      if (!ctx) return;
-
-      const rect = canvas.current.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-
-      ctx.beginPath();
-      ctx.moveTo(x, y);
-
-      if (selectedTool === "shape") {
-        startPoint.current = { x, y };
-      }
+      startPoint.current = null;
+      draw(e);
     };
 
     const handleMouseUp = () => {
       setIsDrawing(false);
-      const canvas = ref as React.RefObject<HTMLCanvasElement>;
-      if (!canvas.current) return;
-
-      const ctx = canvas.current.getContext("2d");
-      if (!ctx) return;
-
-      ctx.beginPath();
       startPoint.current = null;
+      if (contextRef.current) {
+        contextRef.current.beginPath();
+      }
+    };
+
+    const handleMouseLeave = () => {
+      setIsDrawing(false);
+      startPoint.current = null;
+      if (contextRef.current) {
+        contextRef.current.beginPath();
+      }
     };
 
     return (
-      <div className="w-full h-full flex items-center justify-center p-4 bg-gradient-to-br from-purple-100 to-pink-100">
-        <canvas
-          ref={ref}
-          onMouseDown={handleMouseDown}
-          onMouseMove={draw}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          className="border border-gray-300 rounded-lg shadow-lg max-w-full max-h-full bg-white"
-        />
-      </div>
+      <canvas
+        ref={ref}
+        onMouseDown={handleMouseDown}
+        onMouseMove={draw}
+        onMouseUp={handleMouseUp}
+        onMouseLeave={handleMouseLeave}
+        style={{
+          border: "1px solid #ccc",
+          borderRadius: "8px",
+          cursor: "crosshair",
+          touchAction: "none",
+          width: "100%",
+          height: "100%",
+          backgroundColor: "white",
+        }}
+      />
     );
   }
 );

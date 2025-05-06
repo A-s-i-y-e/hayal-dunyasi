@@ -1,10 +1,28 @@
 import { storageService } from "./storageService";
-import { storyService } from "./storyService";
+import { storyService, Story } from "./storyService";
 
 interface SyncQueue {
   id: string;
   type: "create" | "update" | "delete";
-  data: any;
+  data: {
+    title: string;
+    description: string;
+    pages: { imageUrl: string; text: string }[];
+    userId: string;
+    id?: string;
+  };
+  timestamp: number;
+}
+
+interface SyncItem {
+  type: "create" | "update" | "delete";
+  data: {
+    title?: string;
+    description?: string;
+    pages?: { imageUrl: string; text: string }[];
+    userId?: string;
+    id?: string;
+  };
   timestamp: number;
 }
 
@@ -52,12 +70,37 @@ export const syncService = {
       for (const item of queue) {
         switch (item.type) {
           case "create":
-            await storyService.createStory(item.data);
+            if (
+              !item.data.title ||
+              !item.data.description ||
+              !item.data.pages ||
+              !item.data.userId
+            ) {
+              throw new Error("Missing required fields for story creation");
+            }
+            await storyService.createStory(
+              item.data.title,
+              item.data.description,
+              item.data.pages.map((page) => ({
+                image: page.imageUrl,
+                text: page.text,
+              })),
+              item.data.userId
+            );
             break;
           case "update":
-            await storyService.updateStory(item.data.id, item.data);
+            if (!item.data.id) {
+              throw new Error("Missing story ID for update");
+            }
+            await storyService.updateStory(
+              item.data.id,
+              item.data as Partial<Story>
+            );
             break;
           case "delete":
+            if (!item.data.id) {
+              throw new Error("Missing story ID for deletion");
+            }
             await storyService.deleteStory(item.data.id);
             break;
         }
@@ -67,6 +110,81 @@ export const syncService = {
     } catch (error) {
       console.error("Senkronizasyon hatası:", error);
       throw error;
+    }
+  },
+
+  async syncOfflineChanges(items: SyncItem[]): Promise<void> {
+    try {
+      for (const item of items) {
+        switch (item.type) {
+          case "create":
+            if (
+              !item.data.title ||
+              !item.data.description ||
+              !item.data.pages ||
+              !item.data.userId
+            ) {
+              throw new Error("Missing required fields for story creation");
+            }
+            await storyService.createStory(
+              item.data.title,
+              item.data.description,
+              item.data.pages.map((page) => ({
+                image: page.imageUrl,
+                text: page.text,
+              })),
+              item.data.userId
+            );
+            break;
+          case "update":
+            if (!item.data.id) {
+              throw new Error("Missing story ID for update");
+            }
+            await storyService.updateStory(
+              item.data.id,
+              item.data as Partial<Story>
+            );
+            break;
+          case "delete":
+            if (!item.data.id) {
+              throw new Error("Missing story ID for deletion");
+            }
+            await storyService.deleteStory(item.data.id);
+            break;
+        }
+      }
+    } catch (error) {
+      console.error("Error syncing offline changes:", error);
+      throw error;
+    }
+  },
+
+  async saveOfflineChange(item: SyncItem): Promise<void> {
+    try {
+      const offlineItems = this.getOfflineItems();
+      offlineItems.push(item);
+      localStorage.setItem("offlineChanges", JSON.stringify(offlineItems));
+    } catch (error) {
+      console.error("Error saving offline change:", error);
+      throw error;
+    }
+  },
+
+  getOfflineItems(): SyncItem[] {
+    try {
+      const items = localStorage.getItem("offlineChanges");
+      return items ? JSON.parse(items) : [];
+    } catch (error) {
+      console.error("Error getting offline items:", error);
+      return [];
+    }
+  },
+
+  clearOfflineItems(): void {
+    try {
+      localStorage.removeItem("offlineChanges");
+    } catch (error) {
+      console.error("Error clearing offline items:", error);
     }
   },
 };

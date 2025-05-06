@@ -22,9 +22,12 @@ import MemoryCards from "./pages/games/MemoryCards";
 import Puzzle from "./pages/games/Puzzle";
 import Favorites from "./pages/library/Favorites";
 import Tales from "./pages/library/Tales";
-import NewStories from "./pages/library/NewStories";
+import Stories from "./pages/Stories";
 import CreateStory from "./pages/CreateStory";
 import CreateStoryForm from "./pages/CreateStoryForm";
+import StoryDetail from "./pages/StoryDetail";
+import MyStories from "./pages/library/MyStories";
+import StoryDetailNew from "./pages/StoryDetailNew";
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -106,8 +109,12 @@ const App: React.FC = () => {
               element={user ? <Tales /> : <Navigate to="/login" />}
             />
             <Route
-              path="/library/new-stories"
-              element={user ? <NewStories /> : <Navigate to="/login" />}
+              path="/library/my-stories"
+              element={user ? <MyStories /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/stories"
+              element={user ? <Stories /> : <Navigate to="/login" />}
             />
             <Route
               path="/create-story"
@@ -117,6 +124,9 @@ const App: React.FC = () => {
               path="/create-story-form"
               element={user ? <CreateStoryForm /> : <Navigate to="/login" />}
             />
+            <Route path="/story/:id" element={<StoryDetail />} />
+            <Route path="/favorites" element={<Favorites />} />
+            <Route path="/stories/:id" element={<StoryDetailNew />} />
           </Routes>
         </div>
       </Router>

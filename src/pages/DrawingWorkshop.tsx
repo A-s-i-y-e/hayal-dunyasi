@@ -76,6 +76,20 @@ const DrawingWorkshop: React.FC = () => {
     setHistoryIndex(newHistory.length - 1);
   };
 
+  // Canvas'ı başlat
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const ctx = canvas.getContext("2d");
+      if (ctx) {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = "white";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        handleDrawingChange(canvas.toDataURL());
+      }
+    }
+  }, []); // Sadece bir kez çalışsın
+
   const undo = () => {
     if (historyIndex > 0) {
       setHistoryIndex(historyIndex - 1);
@@ -218,7 +232,7 @@ const DrawingWorkshop: React.FC = () => {
                 <h2 className="text-xl font-semibold mb-2 text-gray-700">
                   Şekiller
                 </h2>
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-3 gap-2">
                   {shapes.map((shape) => (
                     <button
                       key={shape.id}
@@ -233,7 +247,7 @@ const DrawingWorkshop: React.FC = () => {
                         {shape.id === "rectangle" && "⬜"}
                         {shape.id === "circle" && "⭕"}
                         {shape.id === "triangle" && "🔺"}
-                        {shape.id === "line" && "➖"}
+                        {shape.id === "line" && "📏"}
                         {shape.id === "star" && "⭐"}
                       </div>
                       <div className="text-xs">{shape.name}</div>
@@ -243,124 +257,104 @@ const DrawingWorkshop: React.FC = () => {
               </div>
             )}
 
-            {/* Fırça Ayarları */}
-            <div className="bg-white/90 backdrop-blur-lg rounded-xl p-2 shadow-lg border border-gray-200">
-              <h2 className="text-xl font-semibold mb-2 text-gray-700">
-                Fırça Ayarları
-              </h2>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-gray-700">Boyut:</label>
-                  <input
-                    type="range"
-                    min="1"
-                    max="20"
-                    value={brushSize}
-                    onChange={(e) => setBrushSize(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                  />
-                  <span className="text-sm text-gray-700 font-medium">
-                    {brushSize}px
-                  </span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-sm text-gray-700">Opaklık:</label>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={opacity}
-                    onChange={(e) => setOpacity(Number(e.target.value))}
-                    className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
-                  />
-                  <span className="text-sm text-gray-700 font-medium">
-                    {opacity}%
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* İşlem Butonları */}
-            <div className="bg-white/90 backdrop-blur-lg rounded-xl p-2 shadow-lg border border-gray-200">
-              <h2 className="text-xl font-semibold mb-2 text-gray-700">
-                İşlemler
-              </h2>
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  onClick={undo}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center gap-2"
-                >
-                  <span className="text-xl">↩️</span>
-                  <span className="text-sm">Geri Al</span>
-                </button>
-                <button
-                  onClick={redo}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center gap-2"
-                >
-                  <span className="text-xl">↪️</span>
-                  <span className="text-sm">İleri Al</span>
-                </button>
-                <button
-                  onClick={clearCanvas}
-                  className="p-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 flex items-center justify-center gap-2"
-                >
-                  <span className="text-xl">🧹</span>
-                  <span className="text-sm">Temizle</span>
-                </button>
-                <button
-                  onClick={handleSaveClick}
-                  className="p-2 rounded-lg bg-blue-500 hover:bg-blue-600 text-white flex items-center justify-center gap-2"
-                >
-                  <span className="text-xl">📚</span>
-                  <span className="text-sm">Kaydet</span>
-                </button>
-              </div>
-            </div>
-
             {/* Renk Paleti */}
             <div className="bg-white/90 backdrop-blur-lg rounded-xl p-2 shadow-lg border border-gray-200">
               <h2 className="text-xl font-semibold mb-2 text-gray-700">
                 Renkler
               </h2>
-              <div className="grid grid-cols-5 gap-2 mb-2">
+              <div className="grid grid-cols-5 gap-2">
                 {colors.map((c) => (
                   <button
                     key={c}
                     onClick={() => setColor(c)}
-                    className={`w-full aspect-square rounded-lg transition-all duration-300 transform hover:scale-110 ${
+                    className={`w-8 h-8 rounded-full border-2 transition-all duration-300 ${
                       color === c
-                        ? "ring-4 ring-purple-500 shadow-lg"
-                        : "hover:shadow-md"
+                        ? "border-purple-500 scale-110 shadow-lg"
+                        : "border-gray-300 hover:scale-105"
                     }`}
                     style={{ backgroundColor: c }}
                   />
                 ))}
               </div>
-              <div className="flex items-center gap-2">
-                <label htmlFor="color" className="text-sm text-gray-700">
-                  Özel Renk:
-                </label>
-                <input
-                  type="color"
-                  id="color"
-                  value={color}
-                  onChange={(e) => setColor(e.target.value)}
-                  className="w-8 h-8 rounded-lg cursor-pointer border border-gray-300"
-                />
+            </div>
+
+            {/* Fırça Boyutu */}
+            <div className="bg-white/90 backdrop-blur-lg rounded-xl p-2 shadow-lg border border-gray-200">
+              <h2 className="text-xl font-semibold mb-2 text-gray-700">
+                Fırça Boyutu
+              </h2>
+              <input
+                type="range"
+                min="1"
+                max="50"
+                value={brushSize}
+                onChange={(e) => setBrushSize(parseInt(e.target.value))}
+                className="w-full"
+              />
+              <div className="text-center text-sm text-gray-600">
+                {brushSize}px
+              </div>
+            </div>
+
+            {/* Opaklık */}
+            <div className="bg-white/90 backdrop-blur-lg rounded-xl p-2 shadow-lg border border-gray-200">
+              <h2 className="text-xl font-semibold mb-2 text-gray-700">
+                Opaklık
+              </h2>
+              <input
+                type="range"
+                min="0"
+                max="100"
+                value={opacity}
+                onChange={(e) => setOpacity(parseInt(e.target.value))}
+                className="w-full"
+              />
+              <div className="text-center text-sm text-gray-600">
+                {opacity}%
+              </div>
+            </div>
+
+            {/* İşlem Butonları */}
+            <div className="bg-white/90 backdrop-blur-lg rounded-xl p-2 shadow-lg border border-gray-200">
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={undo}
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
+                >
+                  ↩️ Geri Al
+                </button>
+                <button
+                  onClick={redo}
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
+                >
+                  ↪️ İleri Al
+                </button>
+                <button
+                  onClick={clearCanvas}
+                  className="p-2 bg-gray-100 hover:bg-gray-200 rounded-lg text-gray-700"
+                >
+                  🧹 Temizle
+                </button>
+                <button
+                  onClick={handleSaveClick}
+                  className="p-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600"
+                >
+                  💾 Kaydet
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Sağ Panel - Çizim Alanı */}
-          <div className="lg:col-span-3 h-full">
-            <div className="bg-white/90 backdrop-blur-lg rounded-xl p-2 shadow-lg border border-gray-200 h-full">
+          {/* Sağ Panel - Canvas */}
+          <div className="lg:col-span-3 bg-white/90 backdrop-blur-lg rounded-xl p-2 shadow-lg border border-gray-200 h-[calc(100vh-12rem)]">
+            <div className="w-full h-full relative">
               <DrawingCanvas
                 ref={canvasRef}
+                selectedTool={selectedTool}
                 color={color}
                 brushSize={brushSize}
                 opacity={opacity}
                 pattern={pattern}
-                selectedTool={selectedTool}
                 shapeType={shapeType}
                 onDrawingChange={handleDrawingChange}
               />
