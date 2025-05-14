@@ -9,6 +9,7 @@ import {
   serverTimestamp,
 } from "firebase/firestore";
 import { auth } from "../services/firebase";
+import { aiService } from "../services/aiService";
 
 interface Story {
   id: string;
@@ -44,6 +45,8 @@ const StoryDetailNew: React.FC = () => {
   const [comment, setComment] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLiked, setIsLiked] = useState(false);
+  const [aiAnalysis, setAiAnalysis] = useState<any>(null);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   useEffect(() => {
     const fetchStory = async () => {
@@ -85,6 +88,32 @@ const StoryDetailNew: React.FC = () => {
 
     fetchStory();
   }, [id]);
+
+  useEffect(() => {
+    const analyzeStory = async () => {
+      if (!story?.pages?.[0]?.imageUrl) return;
+
+      try {
+        setIsAnalyzing(true);
+        const image = new Image();
+        image.src = story.pages[0].imageUrl;
+
+        image.onload = async () => {
+          const analysis = await aiService.analyzeDrawing(image);
+          const suggestions = await aiService.suggestStoryElements(analysis);
+          setAiAnalysis(suggestions);
+          setIsAnalyzing(false);
+        };
+      } catch (error) {
+        console.error("Error analyzing story:", error);
+        setIsAnalyzing(false);
+      }
+    };
+
+    if (story) {
+      analyzeStory();
+    }
+  }, [story]);
 
   const handleLike = async () => {
     if (!story || !auth.currentUser) return;
@@ -355,6 +384,47 @@ const StoryDetailNew: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {isAnalyzing && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-8 rounded-xl shadow-lg text-center">
+            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-600 mx-auto mb-4"></div>
+            <p className="text-xl text-gray-700">Hikaye analiz ediliyor...</p>
+          </div>
+        </div>
+      )}
+
+      {aiAnalysis && (
+        <div className="fixed right-4 top-24 w-80 bg-white rounded-xl shadow-lg p-6">
+          <h3 className="text-xl font-bold text-gray-800 mb-4">AI Analizi</h3>
+          <div className="space-y-4">
+            <div>
+              <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                Karakterler
+              </h4>
+              <ul className="list-disc list-inside">
+                {aiAnalysis.characters.map((char: string, index: number) => (
+                  <li key={index} className="text-gray-600">
+                    {char}
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                Mekan
+              </h4>
+              <p className="text-gray-600">{aiAnalysis.setting}</p>
+            </div>
+            <div>
+              <h4 className="text-lg font-semibold text-gray-700 mb-2">
+                Hikaye
+              </h4>
+              <p className="text-gray-600">{aiAnalysis.plot}</p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

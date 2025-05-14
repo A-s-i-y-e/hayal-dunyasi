@@ -110,7 +110,7 @@ hayal-dunyasi/
 
 ## 📅 Proje İlerleme Durumu
 
-### ✅ Tamamlanan Haftalar (1-9)
+### ✅ Tamamlanan Haftalar (1-10)
 
 1. Hafta: Proje Başlangıcı ve Planlama
 
@@ -165,13 +165,19 @@ hayal-dunyasi/
    - Ses kayıt ve düzenleme araçları
    - Arka plan müziği entegrasyonu
 
-### ⏳ Bekleyen Haftalar (10-14)
+10. Hafta: Yapay Zeka - Temel
 
-1. Hafta: Yapay Zeka - Temel
-2. Hafta: Ebeveyn Paneli
-3. Hafta: Temel Testler
-4. Hafta: Optimizasyon
-5. Hafta: Son Kontroller ve Yayın
+    - TensorFlow.js entegrasyonu
+    - Çizim analizi sistemi
+    - Hikaye önerileri oluşturma
+    - Hata yönetimi ve loglama sistemi
+
+### ⏳ Bekleyen Haftalar (11-14)
+
+1. Hafta: Ebeveyn Paneli
+2. Hafta: Temel Testler
+3. Hafta: Optimizasyon
+4. Hafta: Son Kontroller ve Yayın
 
 ## 📄 Lisans
 
