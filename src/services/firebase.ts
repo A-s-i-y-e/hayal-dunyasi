@@ -72,6 +72,23 @@ export const uploadProfilePicture = async (
   }
 };
 
+// Çizim kaydetme fonksiyonu
+export const saveDrawing = async (
+  userId: string,
+  drawingData: Blob,
+  fileName: string
+): Promise<string> => {
+  try {
+    const path = `drawings/${userId}/${fileName}`;
+    const storageRef = ref(storage, path);
+    await uploadBytes(storageRef, drawingData);
+    const downloadURL = await getDownloadURL(storageRef);
+    return downloadURL;
+  } catch (error) {
+    throw error;
+  }
+};
+
 // Firebase servislerini yeniden export et
 export { auth, db, storage };
 
@@ -83,6 +100,7 @@ const firebaseService = {
   loginUser,
   signOutUser,
   uploadProfilePicture,
+  saveDrawing,
 };
 
 export default firebaseService;

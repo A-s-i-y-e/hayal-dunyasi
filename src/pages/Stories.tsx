@@ -16,6 +16,9 @@ interface Story {
   userId: string;
   userName: string;
   createdAt: any;
+  pages?: { imageUrl: string; text: string }[];
+  drawingImage?: string;
+  drawing: any;
 }
 
 const Stories: React.FC = () => {
@@ -65,18 +68,30 @@ const Stories: React.FC = () => {
             coverImage = "https://via.placeholder.com/400x300?text=Görsel+Yok";
           }
 
+          // Okuma süresini hesapla
+          const readingTime = data.readingTime || "5 dk";
+
+          // İçeriği kontrol et
+          let content = data.content || "";
+          if (data.pages && data.pages.length > 0) {
+            content = data.pages.map((page: any) => page.text).join("\n\n");
+          }
+
           return {
             id: doc.id,
-            title: data.title || "",
-            author: data.author || "",
+            title: data.title || "İsimsiz Hikaye",
+            author: data.userName || data.author || "Anonim",
             coverImage: coverImage,
-            description: data.description || "",
-            content: data.content || "",
-            genre: data.genre || "",
-            readingTime: data.readingTime || "",
+            description: data.description || "Açıklama bulunmuyor.",
+            content: content,
+            genre: data.genre || "Genel",
+            readingTime: readingTime,
             userId: data.userId || "",
             userName: data.userName || "",
             createdAt: data.createdAt,
+            pages: data.pages || [],
+            drawing: data.drawing || {},
+            drawingImage: data.drawingImage,
           } as Story;
         });
 
@@ -105,26 +120,17 @@ const Stories: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-8 pt-24 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-500 mx-auto mb-4"></div>
-          <p className="text-xl text-gray-600">Hikayeler yükleniyor...</p>
-        </div>
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-purple-600"></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100 p-8 pt-24 flex items-center justify-center">
-        <div className="text-center bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-lg">
-          <p className="text-red-600 mb-4">{error}</p>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Yeniden Dene
-          </button>
+      <div className="min-h-screen bg-gradient-to-br from-blue-100 via-purple-100 to-pink-100 flex items-center justify-center">
+        <div className="bg-white/80 backdrop-blur-sm p-8 rounded-xl shadow-lg">
+          <p className="text-red-600 text-lg">{error}</p>
         </div>
       </div>
     );
@@ -160,10 +166,10 @@ const Stories: React.FC = () => {
                 id={story.id}
                 title={story.title}
                 author={story.userName || story.author}
-                coverImage={story.coverImage}
                 genre={story.genre}
                 readingTime={story.readingTime}
                 description={story.description}
+                story={story}
                 onClick={() => handleStoryClick(story)}
               />
             ))}

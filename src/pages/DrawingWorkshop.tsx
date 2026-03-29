@@ -2,6 +2,11 @@ import React, { useRef, useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import DrawingCanvas from "../components/DrawingCanvas";
 import DrawingTools from "../components/DrawingTools";
+import { auth } from "../services/firebase";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "../firebase/config";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../firebase/config";
 
 const DrawingWorkshop: React.FC = () => {
   const navigate = useNavigate();
@@ -19,6 +24,7 @@ const DrawingWorkshop: React.FC = () => {
   const [showNameModal, setShowNameModal] = useState(false);
   const [drawingName, setDrawingName] = useState("");
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   const tools = [
     { id: "brush", icon: "🖌️", name: "Fırça" },
@@ -143,23 +149,53 @@ const DrawingWorkshop: React.FC = () => {
     setShowNameModal(true);
   };
 
-  const handleSaveDrawing = () => {
+  const handleSaveDrawing = async () => {
     const canvas = canvasRef.current;
-    if (canvas) {
-      const link = document.createElement("a");
-      link.download = `${drawingName || "drawing"}.png`;
-      link.href = canvas.toDataURL("image/png");
-      link.click();
+    if (!canvas) {
+      alert("Canvas bulunamadı!");
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      const user = auth.currentUser;
+      if (!user) {
+        alert("Lütfen önce giriş yapın");
+        return;
+      }
+
+      console.log("Kullanıcı giriş yapmış:", user.uid);
+
+      // Sadece base64 string olarak al
+      const base64String = canvas.toDataURL("image/png");
+
+      // Firestore'a kaydet
+      const drawingsRef = collection(db, "drawings");
+      await addDoc(drawingsRef, {
+        userId: user.uid,
+        title: drawingName || "İsimsiz Çizim",
+        imageData: base64String, // SADECE BASE64
+        description: "Çizim atölyesinden yeni çizim",
+        createdAt: new Date(),
+      });
       setShowNameModal(false);
       setDrawingName("");
-
-      // Çizimi kaydettikten sonra hikaye oluşturma sayfasına yönlendir
       navigate("/create-story", {
         state: {
-          drawingUrl: canvas.toDataURL("image/png"),
-          drawingName: drawingName || "drawing",
+          drawingUrl: base64String,
+          drawingName: drawingName || "İsimsiz Çizim",
         },
       });
+    } catch (error) {
+      console.error("Çizim kaydedilirken hata oluştu:", error);
+      // Hata detaylarını göster
+      if (error instanceof Error) {
+        console.error("Hata mesajı:", error.message);
+        console.error("Hata stack:", error.stack);
+      }
+      alert("Çizim kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.");
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -372,21 +408,36 @@ const DrawingWorkshop: React.FC = () => {
                 onChange={(e) => setDrawingName(e.target.value)}
                 placeholder="Çizim adı"
                 className="w-full p-2 border rounded mb-4"
+                disabled={isSaving}
               />
               <div className="flex justify-end space-x-2">
                 <button
                   onClick={() => setShowNameModal(false)}
                   className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300"
+                  disabled={isSaving}
                 >
                   İptal
                 </button>
                 <button
                   onClick={handleSaveDrawing}
-                  className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                  className={`px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 ${
+                    isSaving ? "opacity-50 cursor-not-allowed" : ""
+                  }`}
+                  disabled={isSaving}
                 >
-                  Kaydet
+                  {isSaving ? "Kaydediliyor..." : "Kaydet"}
                 </button>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Yükleme göstergesi */}
+        {isSaving && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg text-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+              <p className="text-lg font-semibold">Çizim kaydediliyor...</p>
             </div>
           </div>
         )}

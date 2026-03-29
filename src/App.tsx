@@ -4,10 +4,13 @@ import {
   Routes,
   Route,
   Navigate,
+  useLocation,
 } from "react-router-dom";
 import { auth } from "./services/firebase";
 import { onAuthStateChanged, User } from "firebase/auth";
 import { AuthProvider } from "./contexts/AuthContext";
+import { TimeLimitProvider } from "./contexts/TimeLimitContext";
+import TimeLimitCheck from "./components/TimeLimitCheck";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import DrawingWorkshop from "./pages/DrawingWorkshop";
@@ -19,7 +22,6 @@ import Games from "./pages/Games";
 import WordPuzzle from "./pages/games/WordPuzzle";
 import NumberGame from "./pages/games/NumberGame";
 import MemoryCards from "./pages/games/MemoryCards";
-import Puzzle from "./pages/games/Puzzle";
 import Favorites from "./pages/library/Favorites";
 import Tales from "./pages/library/Tales";
 import Stories from "./pages/Stories";
@@ -28,8 +30,10 @@ import CreateStoryForm from "./pages/CreateStoryForm";
 import StoryDetail from "./pages/StoryDetail";
 import MyStories from "./pages/library/MyStories";
 import StoryDetailNew from "./pages/StoryDetailNew";
+import MigrationTest from "./pages/MigrationTest";
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
+  const location = useLocation();
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -42,6 +46,9 @@ const App: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
+  const isAuthPage =
+    location.pathname === "/login" || location.pathname === "/register";
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-blue-900 flex items-center justify-center">
@@ -51,10 +58,10 @@ const App: React.FC = () => {
   }
 
   return (
-    <AuthProvider>
-      <Router>
-        <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-blue-900">
-          {user && <Navbar />}
+    <div className="min-h-screen bg-gradient-to-b from-purple-900 via-indigo-900 to-blue-900">
+      {!isAuthPage && <Navbar />}
+      <main className={!isAuthPage ? "pt-20 pb-8 px-4" : "min-h-screen"}>
+        <TimeLimitCheck>
           <Routes>
             <Route
               path="/"
@@ -97,10 +104,6 @@ const App: React.FC = () => {
               element={user ? <MemoryCards /> : <Navigate to="/login" />}
             />
             <Route
-              path="/games/puzzle"
-              element={user ? <Puzzle /> : <Navigate to="/login" />}
-            />
-            <Route
               path="/library/favorites"
               element={user ? <Favorites /> : <Navigate to="/login" />}
             />
@@ -124,12 +127,33 @@ const App: React.FC = () => {
               path="/create-story-form"
               element={user ? <CreateStoryForm /> : <Navigate to="/login" />}
             />
-            <Route path="/story/:id" element={<StoryDetail />} />
-            <Route path="/favorites" element={<Favorites />} />
-            <Route path="/stories/:id" element={<StoryDetailNew />} />
+            <Route
+              path="/story/:id"
+              element={user ? <StoryDetail /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/stories/:id"
+              element={user ? <StoryDetailNew /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/migration-test"
+              element={user ? <MigrationTest /> : <Navigate to="/login" />}
+            />
           </Routes>
-        </div>
-      </Router>
+        </TimeLimitCheck>
+      </main>
+    </div>
+  );
+};
+
+const App: React.FC = () => {
+  return (
+    <AuthProvider>
+      <TimeLimitProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </TimeLimitProvider>
     </AuthProvider>
   );
 };

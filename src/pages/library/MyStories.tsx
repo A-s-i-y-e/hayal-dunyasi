@@ -1,7 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import StoryCard from "../../components/StoryCard";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  deleteDoc,
+  doc,
+  updateDoc,
+} from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { getAuth } from "firebase/auth";
 
@@ -17,6 +25,18 @@ interface Story {
   readingTime: string;
   userId: string;
   userName: string;
+  status?: string;
+  createdAt?: any; // Firestore Timestamp veya Date
+  drawing: any;
+}
+
+// Yardımcı fonksiyon: Her hikayenin tarihini güvenli şekilde al
+function getStoryDate(story: any) {
+  if (story.createdAt && typeof story.createdAt.toDate === "function")
+    return story.createdAt.toDate();
+  if (story.createdAt instanceof Date) return story.createdAt;
+  if (typeof story.createdAt === "string") return new Date(story.createdAt);
+  return new Date(0);
 }
 
 const MyStories: React.FC = () => {
@@ -26,6 +46,9 @@ const MyStories: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const auth = getAuth();
+  const [filter, setFilter] = useState<
+    "all" | "archived" | "active" | "new" | "old" | "title"
+  >("all");
 
   useEffect(() => {
     const fetchUserStories = async () => {
@@ -72,6 +95,9 @@ const MyStories: React.FC = () => {
             readingTime: data.readingTime || "",
             userId: data.userId || "",
             userName: data.userName || "",
+            status: data.status || "active",
+            createdAt: data.createdAt || "",
+            drawing: data.drawing || {},
           } as Story;
         });
 
@@ -96,6 +122,33 @@ const MyStories: React.FC = () => {
 
   const handleCloseStory = () => {
     setSelectedStory(null);
+  };
+
+  const handleEdit = (story: Story) => {
+    navigate(`/edit-story/${story.id}`);
+  };
+
+  const handleDelete = async (story: Story) => {
+    if (!window.confirm("Bu hikayeyi silmek istediğine emin misin?")) return;
+    try {
+      await deleteDoc(doc(db, "stories", story.id));
+      setStories((prev) => prev.filter((s) => s.id !== story.id));
+    } catch (error) {
+      alert("Hikaye silinirken hata oluştu");
+    }
+  };
+
+  const handleArchive = async (story: Story) => {
+    if (!window.confirm("Bu hikayeyi arşivlemek istediğine emin misin?"))
+      return;
+    try {
+      await updateDoc(doc(db, "stories", story.id), { status: "archived" });
+      setStories((prev) =>
+        prev.map((s) => (s.id === story.id ? { ...s, status: "archived" } : s))
+      );
+    } catch (error) {
+      alert("Hikaye arşivlenirken hata oluştu");
+    }
   };
 
   if (loading) {
@@ -137,6 +190,69 @@ const MyStories: React.FC = () => {
           </p>
         </div>
 
+        <div className="flex gap-2 mb-8 justify-center">
+          <button
+            className={`px-4 py-2 rounded-full font-semibold ${
+              filter === "all"
+                ? "bg-green-600 text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+            onClick={() => setFilter("all")}
+          >
+            Tümü
+          </button>
+          <button
+            className={`px-4 py-2 rounded-full font-semibold ${
+              filter === "archived"
+                ? "bg-green-600 text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+            onClick={() => setFilter("archived")}
+          >
+            Arşiv
+          </button>
+          <button
+            className={`px-4 py-2 rounded-full font-semibold ${
+              filter === "active"
+                ? "bg-green-600 text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+            onClick={() => setFilter("active")}
+          >
+            Aktif
+          </button>
+          <button
+            className={`px-4 py-2 rounded-full font-semibold ${
+              filter === "new"
+                ? "bg-green-600 text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+            onClick={() => setFilter("new")}
+          >
+            Yeni
+          </button>
+          <button
+            className={`px-4 py-2 rounded-full font-semibold ${
+              filter === "old"
+                ? "bg-green-600 text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+            onClick={() => setFilter("old")}
+          >
+            Eski
+          </button>
+          <button
+            className={`px-4 py-2 rounded-full font-semibold ${
+              filter === "title"
+                ? "bg-green-600 text-white"
+                : "bg-gray-200 text-gray-700"
+            }`}
+            onClick={() => setFilter("title")}
+          >
+            Başlık
+          </button>
+        </div>
+
         {stories.length === 0 ? (
           <div className="text-center py-12 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg">
             <p className="text-xl text-gray-600">
@@ -151,19 +267,48 @@ const MyStories: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {stories.map((story) => (
-              <StoryCard
-                key={story.id}
-                id={story.id}
-                title={story.title}
-                author={story.userName || story.author}
-                coverImage={story.coverImage}
-                genre={story.genre}
-                readingTime={story.readingTime}
-                description={story.description}
-                onClick={() => handleStoryClick(story)}
-              />
-            ))}
+            {(() => {
+              let filtered = stories;
+              if (filter === "archived")
+                filtered = stories.filter((s) => s.status === "archived");
+              else if (filter === "active")
+                filtered = stories.filter((s) => s.status !== "archived");
+              if (filter === "new")
+                filtered = [...filtered].sort(
+                  (a, b) => getStoryDate(b) - getStoryDate(a)
+                );
+              else if (filter === "old")
+                filtered = [...filtered].sort(
+                  (a, b) => getStoryDate(a) - getStoryDate(b)
+                );
+              else if (filter === "title")
+                filtered = [...filtered].sort((a, b) =>
+                  (a.title || "").localeCompare(b.title || "")
+                );
+              // Sadece 'all' filtresinde en yeni başta olacak şekilde sırala
+              if (filter === "all") {
+                filtered = [...filtered].sort(
+                  (a, b) => getStoryDate(b) - getStoryDate(a)
+                );
+              }
+              return filtered.map((story) => (
+                <StoryCard
+                  key={story.id}
+                  id={story.id}
+                  title={story.title}
+                  author={story.userName || story.author}
+                  genre={story.genre}
+                  readingTime={story.readingTime}
+                  description={story.description}
+                  story={story}
+                  onClick={() => handleStoryClick(story)}
+                  myStoriesMode={true}
+                  onEdit={() => handleEdit(story)}
+                  onDelete={() => handleDelete(story)}
+                  onArchive={() => handleArchive(story)}
+                />
+              ));
+            })()}
           </div>
         )}
 

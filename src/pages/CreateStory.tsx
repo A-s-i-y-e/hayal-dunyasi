@@ -9,9 +9,9 @@ import {
   deleteDoc,
   doc,
   addDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { useNavigate, useLocation } from "react-router-dom";
-import { aiService } from "../services/aiService";
 
 interface Drawing {
   id: string;
@@ -24,41 +24,17 @@ interface Drawing {
 const CreateStory: React.FC = () => {
   const [drawings, setDrawings] = useState<Drawing[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const [aiSuggestions, setAiSuggestions] = useState<any>(null);
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [storyText, setStoryText] = useState("");
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     const fetchDrawings = async () => {
       try {
         const user = auth.currentUser;
         if (!user) return;
-
-        // Eğer çizim atölyesinden yeni bir çizim geldiyse
-        if (location.state?.drawingUrl) {
-          const newDrawing = {
-            imageData: location.state.drawingUrl,
-            title: location.state.drawingName,
-            description: "Çizim atölyesinden yeni çizim",
-            createdAt: new Date(),
-            userId: user.uid,
-          };
-
-          const db = getFirestore();
-          const docRef = await addDoc(collection(db, "drawings"), newDrawing);
-
-          // Yeni çizimi listeye ekle
-          setDrawings((prevDrawings) => [
-            {
-              id: docRef.id,
-              ...newDrawing,
-            },
-            ...prevDrawings,
-          ]);
-        }
 
         const db = getFirestore();
         const drawingsRef = collection(db, "drawings");
@@ -71,9 +47,11 @@ const CreateStory: React.FC = () => {
         })) as Drawing[];
 
         // Tarihe göre sırala (en yeni en üstte)
-        fetchedDrawings.sort(
-          (a, b) => b.createdAt?.toDate() - a.createdAt?.toDate()
-        );
+        fetchedDrawings.sort((a, b) => {
+          const dateA = a.createdAt?.toDate?.() || new Date(0);
+          const dateB = b.createdAt?.toDate?.() || new Date(0);
+          return dateB.getTime() - dateA.getTime();
+        });
 
         setDrawings(fetchedDrawings);
       } catch (error) {
@@ -84,6 +62,48 @@ const CreateStory: React.FC = () => {
     };
 
     fetchDrawings();
+  }, []); // Sadece component mount olduğunda çalışsın
+
+  // Yeni çizim ekleme işlemi
+  const addNewDrawing = async () => {
+    if (!location.state?.drawingUrl || !isInitialMount.current) return;
+
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+
+      isInitialMount.current = false;
+
+      const newDrawing = {
+        imageData: location.state.drawingUrl,
+        title: location.state.drawingName,
+        description: "Çizim atölyesinden yeni çizim",
+        createdAt: serverTimestamp(),
+        userId: user.uid,
+      };
+
+      const db = getFirestore();
+      const docRef = await addDoc(collection(db, "drawings"), newDrawing);
+
+      // Yeni çizimi listeye ekle
+      setDrawings((prevDrawings) => [
+        {
+          id: docRef.id,
+          ...newDrawing,
+        },
+        ...prevDrawings,
+      ]);
+
+      // State'i temizle
+      navigate(location.pathname, { replace: true });
+    } catch (error) {
+      console.error("Yeni çizim eklenirken hata oluştu:", error);
+    }
+  };
+
+  // Yeni çizim varsa ekle
+  useEffect(() => {
+    addNewDrawing();
   }, [location.state]);
 
   const handleDelete = async (drawingId: string) => {
@@ -105,161 +125,93 @@ const CreateStory: React.FC = () => {
   };
 
   const handleCreateStory = (drawing: Drawing) => {
-    // Hikaye oluşturma sayfasına yönlendir ve çizim verisini state olarak gönder
     navigate("/create-story-form", { state: { drawing } });
   };
 
-  const analyzeDrawing = async () => {
-    try {
-      setIsAnalyzing(true);
-      const canvas = canvasRef.current;
-      if (!canvas) return;
-
-      // Canvas'ı resme dönüştür
-      const image = new Image();
-      image.src = canvas.toDataURL("image/png");
-
-      // Resim yüklendiğinde analiz et
-      image.onload = async () => {
-        const analysis = await aiService.analyzeDrawing(image);
-        const storyPrompt = await aiService.generateStoryPrompt(analysis);
-        const suggestions = await aiService.suggestStoryElements(analysis);
-
-        setAiSuggestions(suggestions);
-        setStoryText(storyPrompt);
-        setIsAnalyzing(false);
-      };
-    } catch (error) {
-      console.error("Error analyzing drawing:", error);
-      setIsAnalyzing(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-100 via-pink-100 to-blue-100">
-      {/* Sabit üst kısım */}
-      <div className="fixed top-0 left-0 right-0 bg-white/90 backdrop-blur-sm shadow-md z-50 p-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex justify-between items-center">
-            <h1 className="text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-600 via-pink-600 to-blue-600">
-              Hikayeni Yaz
-            </h1>
-            <button
-              onClick={analyzeDrawing}
-              disabled={isAnalyzing}
-              className="px-6 py-3 bg-purple-600 text-white rounded-xl hover:bg-purple-700 transition-colors disabled:opacity-50"
-            >
-              {isAnalyzing ? "Analiz Ediliyor..." : "Çizimi Analiz Et"}
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* Ana içerik - üst kısımdan boşluk bırakarak */}
-      <div className="pt-24 p-8">
-        <div className="max-w-7xl mx-auto">
-          {loading ? (
-            <div className="text-center">
-              <div className="inline-block animate-spin rounded-full h-8 w-8 border-4 border-purple-500 border-t-transparent"></div>
-              <p className="mt-2 text-gray-700">Çizimler yükleniyor...</p>
+    <div className="container mx-auto px-4 py-8">
+      <div className="max-w-4xl mx-auto">
+        <h1 className="text-3xl font-bold text-white mb-8">
+          Çizimlerimden Hikaye Oluştur
+        </h1>
+        <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6">
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+              {error}
             </div>
-          ) : drawings.length === 0 ? (
-            <div className="text-center bg-white/80 backdrop-blur-sm rounded-xl p-8 shadow-lg">
-              <p className="text-gray-700">
-                Henüz hiç çizim yok. Önce çizim atölyesinde bir çizim yap!
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {drawings.map((drawing) => (
-                <div
-                  key={drawing.id}
-                  className="bg-white/90 backdrop-blur-lg rounded-xl p-4 shadow-lg hover:shadow-xl transition-shadow duration-300"
+          )}
+          <div>
+            {drawings.length === 0 ? (
+              <div className="text-center text-white py-8">
+                <p className="text-lg mb-4">Henüz hiç çizim yapmamışsın!</p>
+                <button
+                  onClick={() => navigate("/drawing-workshop")}
+                  className="px-6 py-3 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors duration-300"
                 >
-                  <div className="relative">
-                    <img
-                      src={drawing.imageData}
-                      alt={drawing.title}
-                      className="w-full h-48 object-contain rounded-lg mb-2"
-                    />
-                    <button
-                      onClick={() => handleDelete(drawing.id)}
-                      className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-300"
-                      title="Çizimi Sil"
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-800 mb-1">
-                    {drawing.title}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-2">
-                    {drawing.description}
-                  </p>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-gray-500">
-                      {drawing.createdAt?.toDate().toLocaleDateString()}
-                    </span>
-                    <button
-                      onClick={() => handleCreateStory(drawing)}
-                      className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors duration-300"
-                    >
-                      Hikaye Oluştur
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {aiSuggestions && (
-            <div className="mt-8 p-6 bg-white rounded-xl shadow-lg">
-              <h2 className="text-2xl font-bold text-gray-800 mb-4">
-                AI Önerileri
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    Karakterler
-                  </h3>
-                  <ul className="list-disc list-inside">
-                    {aiSuggestions.characters.map(
-                      (char: string, index: number) => (
-                        <li key={index} className="text-gray-600">
-                          {char}
-                        </li>
-                      )
-                    )}
-                  </ul>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    Mekan
-                  </h3>
-                  <p className="text-gray-600">{aiSuggestions.setting}</p>
-                </div>
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
-                    Hikaye
-                  </h3>
-                  <p className="text-gray-600">{aiSuggestions.plot}</p>
-                </div>
+                  Çizim Yapmaya Başla
+                </button>
               </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {isAnalyzing && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white p-8 rounded-xl shadow-lg text-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-purple-600 mx-auto mb-4"></div>
-            <p className="text-xl text-gray-700">
-              Çiziminiz analiz ediliyor...
-            </p>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {drawings.map((drawing) => (
+                  <div
+                    key={drawing.id}
+                    className="bg-white rounded-lg shadow-lg overflow-hidden relative group"
+                  >
+                    <div className="relative">
+                      <img
+                        src={drawing.imageData}
+                        alt={drawing.title}
+                        className="w-full h-48 object-cover"
+                      />
+                      <button
+                        onClick={() => handleDelete(drawing.id)}
+                        className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-600"
+                        title="Çizimi Sil"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          className="h-5 w-5"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                        {drawing.title}
+                      </h3>
+                      <p className="text-gray-600 text-sm mb-4">
+                        {drawing.description}
+                      </p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-xs text-gray-500">
+                          {drawing.createdAt
+                            ?.toDate?.()
+                            ?.toLocaleDateString() ||
+                            new Date().toLocaleDateString()}
+                        </span>
+                        <button
+                          onClick={() => handleCreateStory(drawing)}
+                          className="px-3 py-1 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-lg hover:from-purple-600 hover:to-pink-600 transition-colors duration-300"
+                        >
+                          Hikaye Oluştur
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };

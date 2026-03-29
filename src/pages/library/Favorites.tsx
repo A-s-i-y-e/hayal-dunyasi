@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import StoryCard from "../../components/StoryCard";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  getDoc,
+  doc,
+} from "firebase/firestore";
 import { db } from "../../services/firebase";
 import { getAuth } from "firebase/auth";
 
@@ -17,6 +24,7 @@ interface Story {
   readingTime: string;
   userId: string;
   userName: string;
+  drawing: any;
 }
 
 const Favorites: React.FC = () => {
@@ -35,11 +43,9 @@ const Favorites: React.FC = () => {
           return;
         }
 
-        console.log("Beğenilen hikayeler getiriliyor...");
         const likesRef = collection(db, "likes");
         const q = query(likesRef, where("userId", "==", auth.currentUser.uid));
         const likesSnapshot = await getDocs(q);
-
         const likedStoryIds = likesSnapshot.docs.map(
           (doc) => doc.data().storyId
         );
@@ -50,47 +56,37 @@ const Favorites: React.FC = () => {
           return;
         }
 
-        const storiesRef = collection(db, "stories");
-        const storiesQuery = query(
-          storiesRef,
-          where("id", "in", likedStoryIds)
-        );
-        const storiesSnapshot = await getDocs(storiesQuery);
-
-        console.log("Bulunan beğenilen hikaye sayısı:", storiesSnapshot.size);
-
-        const fetchedStories = storiesSnapshot.docs.map((doc) => {
-          const data = doc.data();
-          console.log("Hikaye ID:", doc.id);
-          console.log("Hikaye verisi:", data);
-
-          // Kapak resmini kontrol et
-          let coverImage = "";
-          if (data.pages && data.pages.length > 0 && data.pages[0].imageUrl) {
-            coverImage = data.pages[0].imageUrl;
-          } else if (data.coverImage) {
-            coverImage = data.coverImage;
-          } else {
-            coverImage = "https://via.placeholder.com/400x300?text=Görsel+Yok";
+        // Her bir storyId için stories koleksiyonundan tek tek çek
+        const fetchedStories = [];
+        for (const storyId of likedStoryIds) {
+          const storyDoc = await getDoc(doc(db, "stories", storyId));
+          if (storyDoc.exists()) {
+            const data = storyDoc.data();
+            fetchedStories.push({
+              id: storyDoc.id,
+              title: data.title || "",
+              author: data.author || data.userName || "",
+              coverImage:
+                data.pages && data.pages.length > 0 && data.pages[0].imageUrl
+                  ? data.pages[0].imageUrl
+                  : data.coverImage ||
+                    "https://via.placeholder.com/400x300?text=Görsel+Yok",
+              description: data.description || "",
+              content: data.content || "",
+              date:
+                data.date ||
+                (data.createdAt
+                  ? data.createdAt.toDate?.().toISOString?.()
+                  : ""),
+              genre: data.genre || "",
+              readingTime: data.readingTime || "",
+              userId: data.userId || "",
+              userName: data.userName || "",
+              drawing: data.drawing || {},
+            });
           }
-
-          return {
-            id: doc.id,
-            title: data.title || "",
-            author: data.author || "",
-            coverImage: coverImage,
-            description: data.description || "",
-            content: data.content || "",
-            date: data.date || "",
-            genre: data.genre || "",
-            readingTime: data.readingTime || "",
-            userId: data.userId || "",
-            userName: data.userName || "",
-          } as Story;
-        });
-
-        console.log("İşlenmiş beğenilen hikayeler:", fetchedStories);
-        setStories(fetchedStories);
+        }
+        setStories(fetchedStories as Story[]);
       } catch (error) {
         console.error("Beğenilen hikayeler yüklenirken hata oluştu:", error);
         setError(
@@ -173,10 +169,10 @@ const Favorites: React.FC = () => {
                 id={story.id}
                 title={story.title}
                 author={story.userName || story.author}
-                coverImage={story.coverImage}
                 genre={story.genre}
                 readingTime={story.readingTime}
                 description={story.description}
+                story={story}
                 onClick={() => handleStoryClick(story)}
               />
             ))}

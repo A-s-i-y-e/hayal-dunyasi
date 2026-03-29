@@ -1,7 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import {
+  signInWithEmailAndPassword,
+  setPersistence,
+  browserLocalPersistence,
+  browserSessionPersistence,
+} from "firebase/auth";
 import { auth } from "../services/firebase";
+
+// Basit şifreleme fonksiyonu
+const simpleEncrypt = (text: string): string => {
+  return btoa(text); // Base64 encoding
+};
+
+// Basit şifre çözme fonksiyonu
+const simpleDecrypt = (text: string): string => {
+  return atob(text); // Base64 decoding
+};
 
 const Login: React.FC = () => {
   const navigate = useNavigate();
@@ -9,6 +24,20 @@ const Login: React.FC = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
+  // Sayfa yüklendiğinde localStorage'dan bilgileri al
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    const savedPassword = localStorage.getItem("rememberedPassword");
+    const savedRememberMe = localStorage.getItem("rememberMe") === "true";
+
+    if (savedEmail && savedPassword && savedRememberMe) {
+      setEmail(savedEmail);
+      setPassword(simpleDecrypt(savedPassword));
+      setRememberMe(true);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -16,7 +45,25 @@ const Login: React.FC = () => {
     setError("");
 
     try {
+      // Beni hatırla seçeneğine göre persistence ayarını yap
+      await setPersistence(
+        auth,
+        rememberMe ? browserLocalPersistence : browserSessionPersistence
+      );
       await signInWithEmailAndPassword(auth, email, password);
+
+      // Beni hatırla seçiliyse bilgileri kaydet
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email);
+        localStorage.setItem("rememberedPassword", simpleEncrypt(password));
+        localStorage.setItem("rememberMe", "true");
+      } else {
+        // Seçili değilse bilgileri temizle
+        localStorage.removeItem("rememberedEmail");
+        localStorage.removeItem("rememberedPassword");
+        localStorage.removeItem("rememberMe");
+      }
+
       navigate("/");
     } catch (error: any) {
       setError(
@@ -127,6 +174,22 @@ const Login: React.FC = () => {
                 placeholder="••••••••"
                 required
               />
+            </div>
+
+            <div className="flex items-center">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 text-emerald-600 bg-white/5 border-emerald-500/20 rounded focus:ring-emerald-500/50"
+              />
+              <label
+                htmlFor="rememberMe"
+                className="ml-2 text-sm text-emerald-200"
+              >
+                Beni Hatırla
+              </label>
             </div>
 
             <button

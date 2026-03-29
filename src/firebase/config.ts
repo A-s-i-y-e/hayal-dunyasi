@@ -4,13 +4,13 @@ import { getStorage } from "firebase/storage";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBZd34mxld_RxluU34LrvBBRO8trt3PFXo",
-  authDomain: "hayal-dunyasi.firebaseapp.com",
-  projectId: "hayal-dunyasi",
-  storageBucket: "hayal-dunyasi.firebasestorage.app",
-  messagingSenderId: "875624820974",
-  appId: "1:875624820974:web:471a827e14117b441c83ff",
-  measurementId: "G-4JEQEPKFQ4",
+  apiKey: process.env.REACT_APP_FIREBASE_API_KEY,
+  authDomain: process.env.REACT_APP_FIREBASE_AUTH_DOMAIN,
+  projectId: process.env.REACT_APP_FIREBASE_PROJECT_ID,
+  storageBucket: process.env.REACT_APP_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: process.env.REACT_APP_FIREBASE_MESSAGING_SENDER_ID,
+  appId: process.env.REACT_APP_FIREBASE_APP_ID,
+  measurementId: process.env.REACT_APP_FIREBASE_MEASUREMENT_ID,
 };
 
 // Firebase'i sadece bir kez başlat

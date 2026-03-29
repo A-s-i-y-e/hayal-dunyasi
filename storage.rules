@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    // drawings klasörü özel; kullanıcılar sadece kendi çizimlerine ERİŞEBİLİR ve YAZABİLİR
+    match /drawings/{userId}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == userId;
+    }
+    
+    // images klasörü (hikaye resimleri) genel erişim ama sadece yetkili kullanıcılar yazabilir
+    match /images/{type}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    // ses dosyaları genel erişim ama sadece yetkili kullanıcılar yazabilir
+    match /audio/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    match /images/{type}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+    
+    match /audio/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null;
+    }
+  }
+} 

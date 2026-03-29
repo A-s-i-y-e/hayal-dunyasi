@@ -26,13 +26,6 @@ const Games: React.FC = () => {
       path: "/games/memory-cards",
       gradient: "from-green-500 to-emerald-500",
     },
-    {
-      title: "Puzzle",
-      description: "Parçaları birleştirerek resimleri tamamla!",
-      icon: "🧩",
-      path: "/games/puzzle",
-      gradient: "from-orange-500 to-amber-500",
-    },
   ];
 
   return (
